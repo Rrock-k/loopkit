@@ -1,0 +1,19 @@
+{
+  "name": "loopkit",
+  "version": "0.0.1",
+  "description": "Portable feedback runtime and protocol for AI-generated HTML artifacts.",
+  "type": "module",
+  "private": false,
+  "main": "loopkit.js",
+  "scripts": {
+    "validate": "node scripts/validate.mjs"
+  },
+  "keywords": [
+    "ai",
+    "html",
+    "feedback",
+    "artifact",
+    "prototype"
+  ],
+  "license": "MIT"
+}
