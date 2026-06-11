@@ -1,152 +1,119 @@
 # LoopKit Protocol v0
 
-## 1. Назначение
+LoopKit Protocol описывает, как создавать HTML-артефакты, которые умеют собирать фидбэк прямо внутри интерфейса и передавать его AI для следующей итерации.
 
-LoopKit помогает передавать фидбэк по HTML-артефакту в AI не через расплывчатое описание, а через точные привязки к элементам.
-
-```text
-клик по элементу → комментарий → feedback bundle → AI-итерация
-```
-
-## 2. Минимальный совместимый артефакт
-
-Артефакт должен содержать:
+## 1. Главный цикл
 
 ```text
-metadata
-DECISIONS
-data-loop-id на важных элементах
-LoopKit runtime
-экспорт feedback bundle
+HTML v1
+→ пользователь оставляет фидбэк внутри HTML
+→ экспортирует feedback bundle
+→ AI делает HTML v2
+→ bundle v1 считается использованным
 ```
+
+## 2. Артефакт
+
+Минимальный LoopKit-артефакт содержит:
+
+- metadata;
+- `DECISIONS`;
+- `data-loop-id` на важных элементах;
+- подключённый `loopkit.js` или встроенный runtime;
+- возможность экспортировать feedback bundle.
 
 ## 3. Metadata
 
-Формат:
-
 ```html
-<script type="application/loopkit+json">
+<script type="application/loopkit+json" id="loopkit-meta">
 {
-  "artifact_id": "example",
-  "artifact_version": "v1",
-  "title": "Example Artifact"
+  "artifactId": "my-artifact",
+  "artifactVersion": "v1",
+  "title": "My artifact"
 }
 </script>
 ```
 
-Обязательные поля:
+Допускаются snake_case алиасы: `artifact_id`, `artifact_version`.
 
-```text
-artifact_id
-artifact_version
-```
+## 4. DECISIONS
 
-## 4. Anchors
-
-Важные элементы получают смысловой якорь:
+`DECISIONS` — короткий список постоянных решений, которые переживают версии.
 
 ```html
-<section data-loop-id="lesson.backpressure" data-loop-kind="section" data-loop-title="Backpressure">
+<script type="text/plain" id="loopkit-decisions">
+DECISIONS:
+- Фидбэк одноразовый.
+- Не добавлять звук.
+- UI минималистичный.
+</script>
 ```
 
-Правила:
+Это не changelog и не история комментариев.
 
-```text
-ID должен быть уникален внутри версии.
-ID должен описывать смысл элемента.
-ID не обязан жить вечно между версиями.
-Если элемент остался тем же, ID желательно сохранить.
+## 5. Anchors
+
+Важные элементы получают смысловые якоря:
+
+```html
+<section data-loop-id="hero" data-loop-kind="section" data-loop-title="Hero section"></section>
+<button data-loop-id="hero.cta" data-loop-kind="button" data-loop-title="Hero CTA"></button>
 ```
 
-## 5. Runtime modes
+`data-loop-id` должен быть уникальным внутри текущей версии артефакта.
 
-В v0 достаточно двух режимов:
+## 6. Runtime modes
 
-```text
-Mark up
-Кликнуть конкретный элемент и оставить фидбэк к нему.
+- `Mark up` — выбрать элемент и оставить комментарий к нему;
+- `Comments` — оставить свободный pin-комментарий;
+- `Tweaks` — попросить добавить tweak-контролы в следующей версии;
+- `Copy bundle` — экспортировать feedback bundle.
 
-Comments
-Оставить свободный комментарий на экране/области.
-```
+## 7. Feedback bundle
 
-`Tweaks` и `Edit` не являются частью ядра v0.
+Feedback bundle — переносимый пакет фидбэка для AI.
 
-## 6. Feedback bundle
+Он валиден только для той версии, из которой был экспортирован.
 
-Bundle — переносимый пакет фидбэка, который можно вставить в любой AI-чат.
-
-Минимальная структура:
+Минимальная форма item:
 
 ```json
 {
-  "protocol": "loopkit-feedback-bundle/v0",
-  "artifact": {
-    "id": "example",
-    "version": "v1",
-    "title": "Example Artifact"
+  "type": "markup.comment",
+  "target": {
+    "id": "hero.cta",
+    "title": "Hero CTA"
   },
-  "decisions": ["single self-contained HTML"],
-  "items": [
-    {
-      "id": "fb_1",
-      "type": "markup.comment",
-      "target_id": "hero.title",
-      "target_text": "Welcome",
-      "message": "Сделай заголовок конкретнее"
-    }
-  ]
+  "message": "Кнопка слишком незаметная"
 }
 ```
 
-## 7. Single-use feedback rule
+## 8. Single-use rule
 
-Feedback bundle валиден только для версии, из которой он экспортирован.
+Фидбэк живёт одну итерацию.
 
-```text
-bundle v1 применяется только к artifact v1
-```
+После выпуска новой версии старый bundle считается использованным и не переносится дальше.
 
-После создания следующей версии bundle считается использованным и не переносится дальше.
+Если проблема осталась, пользователь оставит новый фидбэк уже на новой версии.
 
-## 8. DECISIONS
-
-`DECISIONS` — единственная долговременная память артефакта.
-
-Туда пишутся только устойчивые решения:
-
-```text
-- один HTML-файл
-- без звука
-- стиль минималистичный
-- аудитория: начинающие
-```
-
-Туда не пишутся обычные комментарии и мелкие правки.
-
-## 9. Agent iteration rules
+## 9. Agent obligations
 
 Агент обязан:
 
-```text
-1. Проверить версию bundle.
-2. Прочитать DECISIONS.
-3. Обработать каждый feedback item.
-4. Явно сообщить результат по каждому пункту.
-5. Спросить пользователя при конфликте.
-6. Выпустить новую версию artifact_version.
-7. Не переносить старый bundle дальше.
-```
+1. проверить версию bundle;
+2. прочитать `DECISIONS`;
+3. ответить на каждый feedback item;
+4. не решать конфликты молча;
+5. создать новую версию;
+6. не переносить старый bundle автоматически.
 
-## 10. Validation checklist
+## 10. Linked и standalone
 
-Совместимый артефакт должен проходить проверки:
+Это не два режима продукта, а два способа доставки одного runtime.
 
 ```text
-есть loopkit metadata
-есть artifact_id
-есть artifact_version
-есть хотя бы один data-loop-id
-все data-loop-id уникальны
-есть loopkit runtime или inline LoopKit
+Linked:     artifact.html + loopkit.js
+Standalone: artifact.standalone.html, где loopkit.js встроен inline
 ```
+
+Для разработки удобнее linked. Для передачи файла кому угодно удобнее standalone.
