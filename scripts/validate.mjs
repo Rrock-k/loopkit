@@ -11,24 +11,51 @@ const html = readFileSync(file, 'utf8');
 const errors = [];
 const warnings = [];
 
-if (!html.includes('type="application/loopkit+json"') && !html.includes("type='application/loopkit+json'")) {
+const metaMatch = html.match(/<script\b(?=[^>]*type=["']application\/loopkit\+(?:json|meta)["'])[^>]*>([\s\S]*?)<\/script>/i);
+if (!metaMatch) {
   errors.push('Missing LoopKit metadata: script[type="application/loopkit+json"]');
+} else {
+  try {
+    const meta = JSON.parse(metaMatch[1].trim() || '{}');
+    const artifactId = meta.artifactId || meta.artifact_id;
+    const artifactVersion = meta.artifactVersion || meta.artifact_version;
+    if (!artifactId || typeof artifactId !== 'string') errors.push('Missing non-empty artifactId/artifact_id in metadata');
+    if (!artifactVersion || typeof artifactVersion !== 'string') errors.push('Missing non-empty artifactVersion/artifact_version in metadata');
+  } catch (error) {
+    errors.push(`Invalid LoopKit metadata JSON: ${error.message}`);
+  }
 }
-if (!/artifactId\s*['"]?\s*:/.test(html) && !/artifact_id\s*['"]?\s*:/.test(html)) {
-  errors.push('Missing artifactId/artifact_id in metadata');
+
+if (!/<script\b(?=[^>]*id=["']loopkit-decisions["'])[^>]*>/i.test(html)) {
+  warnings.push('Missing #loopkit-decisions');
 }
-if (!/artifactVersion\s*['"]?\s*:/.test(html) && !/artifact_version\s*['"]?\s*:/.test(html)) {
-  errors.push('Missing artifactVersion/artifact_version in metadata');
+if (!/<script\b(?=[^>]*id=["']loopkit-agent-instructions["'])[^>]*>/i.test(html)) {
+  warnings.push('Missing #loopkit-agent-instructions for fully self-contained artifacts');
 }
-if (!html.includes('loopkit-decisions')) warnings.push('Missing #loopkit-decisions');
-if (!html.includes('loopkit.js') && !html.includes('loopkit-runtime') && !html.includes('LoopKit runtime')) {
+
+const hasExternalRuntime = /<script\b[^>]*src=["'][^"']*loopkit\.js[^"']*["'][^>]*><\/script>/i.test(html);
+const hasInlineRuntime = /<script\b(?=[^>]*id=["']loopkit-runtime["'])[^>]*>/i.test(html) || /window\.LoopKit|\[LoopKit\]/.test(html);
+if (!hasExternalRuntime && !hasInlineRuntime) {
   errors.push('Missing LoopKit runtime: expected external loopkit.js or embedded runtime marker');
 }
 
-const ids = [...html.matchAll(/data-loop-id=["']([^"']+)["']/g)].map((m) => m[1]);
+const withoutScripts = html.replace(/<script\b[\s\S]*?<\/script>/gi, '');
+const ids = [...withoutScripts.matchAll(/\bdata-loop-id=["']([^"']+)["']/g)].map((m) => m[1].trim());
 if (!ids.length) errors.push('No data-loop-id anchors found');
-const duplicates = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
-if (duplicates.length) errors.push(`Duplicate data-loop-id values: ${duplicates.slice(0, 12).join(', ')}${duplicates.length > 12 ? '...' : ''}`);
+if (ids.some((id) => !id)) errors.push('Empty data-loop-id value found');
+
+const seen = new Set();
+const duplicates = [];
+for (const id of ids) {
+  if (seen.has(id) && !duplicates.includes(id)) duplicates.push(id);
+  seen.add(id);
+}
+if (duplicates.length) {
+  errors.push(`Duplicate data-loop-id values: ${duplicates.slice(0, 12).join(', ')}${duplicates.length > 12 ? '...' : ''}`);
+}
+if (ids.length < 3) {
+  warnings.push(`Only ${ids.length} data-loop-id anchors found; useful artifacts usually mark key sections and controls.`);
+}
 
 if (warnings.length) {
   console.warn('Warnings:');
