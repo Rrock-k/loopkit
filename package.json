@@ -1,12 +1,14 @@
 {
   "name": "loopkit",
-  "version": "0.0.1",
-  "description": "Portable feedback runtime and protocol for AI-generated HTML artifacts.",
-  "type": "module",
+  "version": "0.1.2",
   "private": false,
+  "description": "Portable feedback runtime for self-describing HTML artifacts.",
+  "type": "module",
   "main": "loopkit.js",
   "scripts": {
-    "validate": "node scripts/validate.mjs"
+    "validate": "node scripts/validate.mjs",
+    "standalone": "node scripts/build-standalone.mjs",
+    "check": "node --check loopkit.js && node --check scripts/validate.mjs && node --check scripts/build-standalone.mjs"
   },
   "keywords": [
     "ai",
