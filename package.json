@@ -1,6 +1,6 @@
 {
   "name": "loopkit",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "private": false,
   "description": "Portable feedback runtime for self-describing HTML artifacts.",
   "type": "module",
