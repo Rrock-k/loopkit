@@ -37,10 +37,10 @@ npm run standalone -- examples/basic.html examples/basic.standalone.html
 ## Минимальный артефакт
 
 ```html
-<script type="application/loopkit+json">
+<script type="application/loopkit+json" id="loopkit-meta">
 {
-  "artifact_id": "my-artifact",
-  "artifact_version": "v1",
+  "artifactId": "my-artifact",
+  "artifactVersion": "v1",
   "title": "My Artifact"
 }
 </script>
@@ -68,9 +68,13 @@ DECISIONS:
 ```text
 Mark up   — клик по элементу с data-loop-id и комментарий к нему
 Comments  — свободный pin-комментарий на экране
-Tweaks    — запрос агенту добавить интерактивные твики
-Copy      — экспорт feedback bundle для AI
+Tweaks    — request-only: попросить агента добавить tweak-контролы в следующей версии
+Copy      — экспортировать feedback bundle для AI
 ```
+
+## UI v0
+
+Runtime рендерит минималистичную floating-панель поверх артефакта. UI должен быть тихим: без тяжёлых зависимостей, без AI-glow, без лишних статусов. Панель можно скрыть, а при активном режиме LoopKit перехватывает клавиши, чтобы они не конфликтовали с самим артефактом.
 
 ## Структура v0
 
@@ -80,6 +84,7 @@ AGENTS.md
 PROTOCOL.md
 loopkit.js
 examples/basic.html
+examples/basic.standalone.html
 scripts/validate.mjs
 scripts/build-standalone.mjs
 package.json
@@ -89,6 +94,7 @@ LICENSE
 ## Команды
 
 ```bash
+npm run check
 npm run validate -- examples/basic.html
 npm run standalone -- examples/basic.html examples/basic.standalone.html
 ```
