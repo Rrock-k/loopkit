@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const VERSION = '0.2.0-portable';
+  const VERSION = '0.2.1-portable';
   const ROOT_ID = 'loopkit-root';
   const META_SELECTOR = 'script[type="application/loopkit+json"],script[type="application/loopkit+meta"]';
   const DECISIONS_SELECTOR = '#loopkit-decisions';
@@ -35,6 +35,7 @@
   let blockNext = false;
   let collapsed = readUi().collapsed || false;
   let previewEventId = null;
+  let pendingDeleteId = null;
   let host;
   let root;
 
@@ -65,6 +66,7 @@
           --line: rgba(23,23,23,.13);
           --soft: rgba(23,23,23,.055);
           --accent: #111827;
+          --danger: #dc2626;
           --shadow: 0 18px 60px rgba(0,0,0,.18);
         }
         button, textarea { font: inherit; }
@@ -260,13 +262,20 @@
         }
         .drawer.is-visible { display:flex; }
         .drawer-list { overflow:auto; padding:10px; display:grid; gap:8px; }
-        .item { border:1px solid rgba(23,23,23,.10); border-radius:14px; padding:10px; background:rgba(23,23,23,.025); }
+        .item { position:relative; border:1px solid rgba(23,23,23,.10); border-radius:14px; padding:10px 42px 10px 10px; background:rgba(23,23,23,.025); }
         .item small { display:block; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:.04em; margin-bottom:5px; font-size:11px; }
         .item-text { font-size:12px; line-height:1.35; white-space:pre-wrap; }
-        .item button { margin-top:8px; height:26px; border-radius:999px; border:1px solid rgba(23,23,23,.12); background:#fff; padding:0 9px; font-size:11px; cursor:pointer; }
+        .delete-zone { position:absolute; right:7px; top:7px; display:flex; align-items:center; gap:4px; }
+        .icon-btn { width:28px; height:28px; padding:0; border:0; border-radius:999px; background:transparent; color:var(--muted); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
+        .icon-btn:hover { background:var(--soft); color:var(--danger); }
+        .confirm-delete { display:flex; align-items:center; gap:5px; padding:3px 4px 3px 8px; border:1px solid rgba(220,38,38,.16); border-radius:999px; background:#fff; box-shadow:0 8px 22px rgba(0,0,0,.08); }
+        .confirm-delete span { font-size:11px; font-weight:800; color:var(--danger); white-space:nowrap; }
+        .confirm-delete button { height:24px; border:0; border-radius:999px; background:transparent; color:var(--muted); padding:0 7px; font-size:11px; font-weight:800; cursor:pointer; }
+        .confirm-delete button:hover { background:var(--soft); color:var(--text); }
+        .confirm-delete .yes { background:var(--danger); color:#fff; }
+        .confirm-delete .yes:hover { background:#b91c1c; color:#fff; }
         .preview { position: fixed; display:none; width:min(340px, calc(100vw - 28px)); padding:12px; }
         .preview.is-visible { display:block; }
-        .preview-target { color:var(--muted); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; margin:6px 0; }
         .preview-text { font-size:13px; line-height:1.35; white-space:pre-wrap; }
         .toast {
           position: fixed;
@@ -348,26 +357,54 @@
   function bindUi(){
     root.addEventListener('pointerdown', e => e.stopPropagation(), false);
     root.addEventListener('click', e => e.stopPropagation(), false);
-    root.addEventListener('keydown', e => e.stopPropagation(), false);
+    root.addEventListener('keydown', onShadowKey, false);
+
     root.querySelectorAll('[data-mode]').forEach(button => button.addEventListener('click', e => {
       stop(e);
-      setMode(mode === button.dataset.mode ? null : button.dataset.mode);
+      const next = mode === button.dataset.mode ? null : button.dataset.mode;
+      setMode(next);
+      if (!next) releaseFocus();
     }));
     root.querySelectorAll('[data-copy]').forEach(button => button.addEventListener('click', e => { stop(e); copyBundle(); }));
-    root.querySelectorAll('[data-cancel]').forEach(button => button.addEventListener('click', e => { stop(e); closeComposer(); }));
+    root.querySelectorAll('[data-cancel]').forEach(button => button.addEventListener('click', e => { stop(e); closeComposer(); releaseFocus(); }));
     $('.composer [data-save]').addEventListener('click', e => { stop(e); saveDraft(); });
-    $('[data-close]').addEventListener('click', e => { stop(e); $('.drawer').classList.remove('is-visible'); });
+    $('[data-close]').addEventListener('click', e => { stop(e); $('.drawer').classList.remove('is-visible'); releaseFocus(); });
     $('[data-clear]').addEventListener('click', e => { stop(e); clearEvents(); });
     $('[data-collapse]').addEventListener('click', e => { stop(e); setCollapsed(true); });
     $('[data-expand]').addEventListener('click', e => { stop(e); setCollapsed(false); });
     $('.pill').addEventListener('click', e => { stop(e); $('.drawer').classList.toggle('is-visible'); renderList(); });
     $('textarea').addEventListener('input', e => { dirty = !!e.target.value.trim(); });
-    $('textarea').addEventListener('keydown', e => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-        e.preventDefault();
-        saveDraft();
-      }
-    }, false);
+  }
+
+  function onShadowKey(e){
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && isTextInputEvent(e)) {
+      e.preventDefault();
+      e.stopPropagation();
+      saveDraft();
+      return;
+    }
+
+    const active = isLoopKitActive();
+    if (!active) return;
+
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      clearMode();
+      closeComposer();
+      hidePreview();
+      $('.drawer').classList.remove('is-visible');
+      releaseFocus();
+      return;
+    }
+
+    if (isTextInputEvent(e)) {
+      e.stopPropagation();
+      return;
+    }
+
+    e.stopPropagation();
+    if (isNavigationKey(e)) e.preventDefault();
   }
 
   function setCollapsed(next){
@@ -379,6 +416,7 @@
       closeComposer();
       hidePreview();
       $('.drawer').classList.remove('is-visible');
+      releaseFocus();
     }
   }
 
@@ -390,7 +428,10 @@
     hideOutline();
     root.querySelectorAll('[data-mode]').forEach(button => button.classList.toggle('is-active', button.dataset.mode === mode));
     document.documentElement.dataset.loopkitMode = mode || '';
-    if (mode === 'tweaks') openComposer(null, window.innerWidth / 2 - 180, 64, 'tweak.request', 'Tweaks request', 'Опиши, какие интерактивные настройки нужно добавить в следующей версии.');
+    if (!mode) return;
+    if (mode === 'tweaks') {
+      openComposer(null, window.innerWidth / 2 - 180, 64, 'tweak.request', 'Tweaks request', 'Опиши, какие интерактивные настройки нужно добавить в следующей версии.');
+    }
   }
 
   function clearMode(){
@@ -412,10 +453,12 @@
     if (!mode || isLK(e)) return;
     stop(e);
     blockNext = true;
+
     if ($('.composer').classList.contains('is-visible') && dirty) {
       shake($('.composer'));
       return;
     }
+
     const target = targetAt(e.clientX, e.clientY);
     if (mode === 'markup') {
       if (!target) { toast('Нет data-loop-id'); return; }
@@ -423,7 +466,7 @@
       point = null;
       openComposer(target, e.clientX + 12, e.clientY + 12, 'markup.comment', titleOf(target));
     } else if (mode === 'comments') {
-      targetEl = target || document.querySelector('[data-loop-id]');
+      targetEl = target || activeScope();
       point = makePoint(targetEl, e.clientX, e.clientY);
       openComposer(targetEl, e.clientX + 12, e.clientY + 12, 'comment.pin', 'Comment');
     }
@@ -438,23 +481,36 @@
   }
 
   function onKey(e){
-    if (isLK(e)) return;
     const key = e.key.toLowerCase();
-    if ((e.metaKey || e.ctrlKey) && e.shiftKey && key === 'e') { stop(e); copyBundle(); return; }
-    if ((e.metaKey || e.ctrlKey) && e.shiftKey && key === 'l') { stop(e); setCollapsed(!collapsed); return; }
 
-    const active = !!mode || $('.composer')?.classList.contains('is-visible') || $('.drawer')?.classList.contains('is-visible');
-    if (active) {
-      e.stopPropagation();
-      e.stopImmediatePropagation && e.stopImmediatePropagation();
-      if ([' ', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'].includes(e.key)) e.preventDefault();
+    if ((e.metaKey || e.ctrlKey) && e.shiftKey && key === 'e') {
+      stop(e);
+      copyBundle();
+      return;
     }
+    if ((e.metaKey || e.ctrlKey) && e.shiftKey && key === 'l') {
+      stop(e);
+      setCollapsed(!collapsed);
+      return;
+    }
+
+    if (isTextInputEvent(e)) return;
+
+    const active = isLoopKitActive();
+    if (!active) return;
+
+    e.stopPropagation();
+    e.stopImmediatePropagation && e.stopImmediatePropagation();
+
+    if (isNavigationKey(e)) e.preventDefault();
+
     if (e.key === 'Escape') {
       e.preventDefault();
       clearMode();
       closeComposer();
       hidePreview();
       $('.drawer').classList.remove('is-visible');
+      releaseFocus();
     }
   }
 
@@ -488,15 +544,18 @@
     const textarea = composer.querySelector('textarea');
     const message = textarea.value.trim();
     if (!message) { shake(composer); return; }
+
     const type = composer.dataset.type || 'markup.comment';
     const ev = base(type, message);
     if (type !== 'tweak.request') ev.target = info(targetEl);
     if (type === 'comment.pin') ev.point = point;
+
     events.push(ev);
     persist();
     closeComposer();
     clearMode();
     render();
+    releaseFocus();
     toast('Saved');
   }
 
@@ -508,6 +567,10 @@
     const target = el && el.closest && el.closest('[data-loop-id]');
     if (!target || target.closest('[data-loop-ignore]')) return null;
     return target;
+  }
+
+  function activeScope(){
+    return document.querySelector('.slide.active,[aria-current="true"],[data-loop-active="true"]') || document.querySelector('[data-loop-id]');
   }
 
   function makePoint(target, x, y){
@@ -538,31 +601,65 @@
     renderPins();
     if (previewEventId && !events.some(ev => ev.id === previewEventId)) hidePreview();
   }
+
   function renderPill(){
     const pill = $('.pill');
     pill.textContent = 'Feedback ' + events.length;
     pill.classList.toggle('is-visible', events.length > 0);
   }
+
   function renderList(){
     const list = $('.drawer-list');
     if (!list) return;
-    if (!events.length) { list.innerHTML = '<div class="item">Пока нет фидбэка.</div>'; return; }
+
+    if (!events.length) {
+      list.innerHTML = '<div class="item">Пока нет фидбэка.</div>';
+      return;
+    }
+
     list.innerHTML = '';
     events.forEach((ev, index) => {
       const item = document.createElement('div');
       item.className = 'item';
-      item.innerHTML = `<small>${index + 1}. ${esc(ev.type)} ${ev.target ? '· ' + esc(ev.target.id) : ''}</small><div class="item-text">${esc(ev.message)}</div><button type="button" class="lk-delete" title="Удалить feedback">${ICONS.trash}<span>Delete</span></button>`;
-      item.querySelector('.lk-delete').addEventListener('click', e => { stop(e); deleteEvent(ev.id); });
+
+      const small = document.createElement('small');
+      small.textContent = `${index + 1}. ${ev.type}${ev.target ? ' · ' + ev.target.id : ''}`;
+      const text = document.createElement('div');
+      text.className = 'item-text';
+      text.textContent = ev.message;
+      const zone = document.createElement('div');
+      zone.className = 'delete-zone';
+
+      if (pendingDeleteId === ev.id) {
+        zone.innerHTML = '<div class="confirm-delete"><span>Delete?</span><button type="button" class="yes">Yes</button><button type="button">No</button></div>';
+        zone.querySelector('.yes').addEventListener('click', e => { stop(e); deleteEvent(ev.id); });
+        zone.querySelector('button:not(.yes)').addEventListener('click', e => { stop(e); pendingDeleteId = null; renderList(); });
+      } else {
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'icon-btn';
+        del.title = 'Delete feedback';
+        del.innerHTML = ICONS.trash + '<span class="sr">Delete</span>';
+        del.addEventListener('click', e => { stop(e); pendingDeleteId = ev.id; renderList(); });
+        zone.appendChild(del);
+      }
+
+      item.appendChild(small);
+      item.appendChild(text);
+      item.appendChild(zone);
       list.appendChild(item);
     });
   }
+
   function renderPins(){
     const box = $('.pins');
     if (!box) return;
     box.innerHTML = '';
+
     events.forEach((ev, index) => {
       const pos = pinPos(ev);
       if (!pos) return;
+
       const pin = document.createElement('button');
       pin.type = 'button';
       pin.className = 'pin' + (ev.type === 'comment.pin' ? ' free' : '');
@@ -574,11 +671,13 @@
       box.appendChild(pin);
     });
   }
+
   function pinPos(ev){
     let target = null;
     if (ev.target && ev.target.id) {
       try { target = document.querySelector(`[data-loop-id="${cssEsc(ev.target.id)}"]`); } catch {}
     }
+
     if (target && ev.point && ev.point.relX != null) {
       const rect = target.getBoundingClientRect();
       return { x: Math.round(rect.left + rect.width * ev.point.relX), y: Math.round(rect.top + rect.height * ev.point.relY) };
@@ -590,39 +689,72 @@
     }
     return null;
   }
+
   function showPreview(ev, anchor, number){
     const preview = $('.preview');
     const rect = anchor.getBoundingClientRect();
     previewEventId = ev.id;
-    preview.innerHTML = `<div class="head"><div><div class="title">${number}. ${esc(ev.type)}</div><div class="sub">${esc(ev.target?.id || 'artifact')}</div></div><button type="button" class="x" data-preview-close>${ICONS.close}</button></div><div class="body"><div class="preview-text">${esc(ev.message)}</div><div class="actions"><button type="button" class="action" data-preview-delete>${ICONS.trash}<span>Delete</span></button></div></div>`;
+    preview.innerHTML = `<div class="head"><div><div class="title">${number}. ${esc(ev.type)}</div><div class="sub">${esc(ev.target?.id || 'artifact')}</div></div><button type="button" class="x" data-preview-close>${ICONS.close}</button></div><div class="body"><div class="preview-text">${esc(ev.message)}</div></div>`;
     preview.style.left = clamp(rect.left + 12, 14, window.innerWidth - 360) + 'px';
     preview.style.top = clamp(rect.top + 12, 54, window.innerHeight - 220) + 'px';
     preview.classList.add('is-visible');
     preview.querySelector('[data-preview-close]').addEventListener('click', e => { stop(e); hidePreview(); });
-    preview.querySelector('[data-preview-delete]').addEventListener('click', e => { stop(e); deleteEvent(ev.id); });
   }
-  function hidePreview(){ const preview = $('.preview'); if (!preview) return; preview.classList.remove('is-visible'); preview.innerHTML = ''; previewEventId = null; }
-  function deleteEvent(id){ events = events.filter(ev => ev.id !== id); persist(); render(); toast('Deleted'); }
+
+  function hidePreview(){
+    const preview = $('.preview');
+    if (!preview) return;
+    preview.classList.remove('is-visible');
+    preview.innerHTML = '';
+    previewEventId = null;
+  }
+
+  function deleteEvent(id){
+    const before = events.length;
+    events = events.filter(ev => ev.id !== id);
+    if (events.length === before) return;
+    pendingDeleteId = null;
+    persist();
+    render();
+    hidePreview();
+    toast('Deleted');
+  }
 
   function base(type, message){
     return { id: uid('fb'), type, artifactId: meta.artifactId, artifactVersion: meta.artifactVersion, createdAt: new Date().toISOString(), message, url: location.href };
   }
+
   function info(target){
     if (!target) return null;
     const rect = target.getBoundingClientRect();
-    return { id: target.dataset.loopId, kind: target.dataset.loopKind || target.tagName.toLowerCase(), title: titleOf(target), selector: `[data-loop-id="${cssEsc(target.dataset.loopId)}"]`, text: compact(target.textContent, 700), rect: { x: Math.round(rect.left), y: Math.round(rect.top), width: Math.round(rect.width), height: Math.round(rect.height) } };
+    return {
+      id: target.dataset.loopId,
+      kind: target.dataset.loopKind || target.tagName.toLowerCase(),
+      title: titleOf(target),
+      selector: `[data-loop-id="${cssEsc(target.dataset.loopId)}"]`,
+      text: compact(target.textContent, 700),
+      rect: { x: Math.round(rect.left), y: Math.round(rect.top), width: Math.round(rect.width), height: Math.round(rect.height) }
+    };
   }
 
   function exportBundle(){
     return {
       protocol: 'loopkit.feedback_bundle.v0',
       runtimeVersion: VERSION,
-      artifact: { id: meta.artifactId, version: meta.artifactVersion, title: meta.title, description: meta.description || '', url: location.href, feedback_policy: 'single-use' },
+      artifact: {
+        id: meta.artifactId,
+        version: meta.artifactVersion,
+        title: meta.title,
+        description: meta.description || '',
+        url: location.href,
+        feedback_policy: 'single-use'
+      },
       decisions,
       agent_instructions: agentInstructions,
       items: events.slice()
     };
   }
+
   function exportMarkdown(){
     const bundle = exportBundle();
     const lines = ['# LoopKit feedback bundle', '', `Artifact: ${bundle.artifact.title}`, `ID: ${bundle.artifact.id}`, `Version: ${bundle.artifact.version}`, 'Policy: feedback is single-use and applies only to this artifact version.', ''];
@@ -638,6 +770,7 @@
     lines.push('', '## Machine-readable JSON', '```json', JSON.stringify(bundle, null, 2), '```');
     return lines.join('\n');
   }
+
   async function copyBundle(){
     const text = exportMarkdown();
     try { await navigator.clipboard.writeText(text); }
@@ -651,20 +784,60 @@
     }
     toast('Feedback bundle copied');
   }
-  function clearEvents(){ events = []; persist(); render(); $('.drawer').classList.remove('is-visible'); hidePreview(); toast('Cleared'); }
+
+  function clearEvents(){
+    events = [];
+    pendingDeleteId = null;
+    persist();
+    render();
+    $('.drawer').classList.remove('is-visible');
+    hidePreview();
+    toast('Cleared');
+  }
+
+  function isLoopKitActive(){
+    return !!mode || $('.composer')?.classList.contains('is-visible') || $('.drawer')?.classList.contains('is-visible');
+  }
+
+  function isNavigationKey(e){
+    return [' ', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'].includes(e.key);
+  }
+
+  function isTextInputEvent(e){
+    const node = e.composedPath?.()[0] || e.target;
+    const tag = node?.tagName;
+    return tag === 'TEXTAREA' || tag === 'INPUT' || node?.isContentEditable;
+  }
+
+  function releaseFocus(){
+    try { root?.activeElement?.blur?.(); } catch {}
+    try { if (document.activeElement === host) host.blur(); } catch {}
+    const body = document.body;
+    if (!body) return;
+    if (!body.hasAttribute('tabindex')) body.setAttribute('tabindex', '-1');
+    try { body.focus({ preventScroll: true }); } catch {}
+  }
+
   function readEvents(){ try { return JSON.parse(localStorage.getItem(storageKey) || '[]'); } catch { return []; } }
   function persist(){ localStorage.setItem(storageKey, JSON.stringify(events)); }
   function readUi(){ try { return JSON.parse(localStorage.getItem(uiKey) || '{}'); } catch { return {}; } }
   function writeUi(value){ localStorage.setItem(uiKey, JSON.stringify(value)); }
+
   function readMeta(){
     const fallback = { artifactId: document.title || 'artifact', artifactVersion: 'v1', title: document.title || 'Artifact', description: '' };
     const node = document.querySelector(META_SELECTOR);
     if (!node) return fallback;
     try {
       const raw = JSON.parse(node.textContent || '{}');
-      return { artifactId: raw.artifactId || raw.artifact_id || fallback.artifactId, artifactVersion: raw.artifactVersion || raw.artifact_version || fallback.artifactVersion, title: raw.title || fallback.title, description: raw.description || '' };
+      return {
+        artifactId: raw.artifactId || raw.artifact_id || fallback.artifactId,
+        artifactVersion: raw.artifactVersion || raw.artifact_version || fallback.artifactVersion,
+        title: raw.title || fallback.title,
+        description: raw.description || ''
+      };
     } catch { return fallback; }
   }
+
   function textOf(selector){ return (document.querySelector(selector)?.textContent || '').trim(); }
   function $(selector){ return root.querySelector(selector); }
   function isLK(e){ return e.composedPath && e.composedPath().includes(host); }
