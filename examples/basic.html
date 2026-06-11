@@ -21,6 +21,15 @@ DECISIONS:
 - Между версиями сохраняются только DECISIONS.
   </script>
 
+  <script type="text/plain" id="loopkit-agent-instructions">
+LOOPKIT AGENT INSTRUCTIONS:
+1. Feedback bundle applies only to this artifactVersion.
+2. Process every feedback item explicitly: done, rejected with reason, or needs user decision.
+3. Preserve DECISIONS unless the user explicitly changes them.
+4. Keep meaningful data-loop-id anchors when the same element still exists.
+5. Do not carry old feedback forward automatically.
+  </script>
+
   <style>
     :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f7f3ed; color: #171717; }
