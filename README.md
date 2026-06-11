@@ -32,7 +32,7 @@ LoopKit не является баг-трекером, Webflow-клоном ил
 npm run standalone -- examples/basic.html examples/basic.standalone.html
 ```
 
-Для пользователя это всё равно один HTML-файл.
+Для пользователя это всё равно один HTML-файл. Standalone-файл генерируется командой, а не хранится как основной исходник.
 
 ## Минимальный артефакт
 
@@ -84,7 +84,6 @@ AGENTS.md
 PROTOCOL.md
 loopkit.js
 examples/basic.html
-examples/basic.standalone.html
 scripts/validate.mjs
 scripts/build-standalone.mjs
 package.json
