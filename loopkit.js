@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const VERSION='0.1.6-portable';
+  const VERSION='0.1.7-portable';
   const ROOT_ID='loopkit-root';
   const META='script[type="application/loopkit+json"],script[type="application/loopkit+meta"]';
   const DECISIONS='#loopkit-decisions';
@@ -48,9 +48,9 @@
   }
 
   function bindUi(root){
-    root.addEventListener('pointerdown', stop, true);
-    root.addEventListener('click', stop, true);
-    root.addEventListener('keydown', e=>{ e.stopPropagation(); if((e.metaKey||e.ctrlKey)&&e.key==='Enter') saveDraft(); }, true);
+    root.addEventListener('pointerdown', e=>e.stopPropagation(), false);
+    root.addEventListener('click', e=>e.stopPropagation(), false);
+    root.addEventListener('keydown', e=>e.stopPropagation(), false);
     root.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click', e=>{stop(e); setMode(mode===b.dataset.mode?null:b.dataset.mode);}));
     root.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click', e=>{stop(e); copyBundle();}));
     root.querySelector('[data-save]').addEventListener('click', e=>{stop(e); saveDraft();});
@@ -59,6 +59,7 @@
     root.querySelector('[data-clear]').addEventListener('click', e=>{stop(e); clearEvents();});
     root.querySelector('.lk-pill').addEventListener('click', e=>{stop(e); $('.lk-drawer').classList.toggle('is-visible'); renderList();});
     root.querySelector('textarea').addEventListener('input', e=>{dirty=!!e.target.value.trim();});
+    root.querySelector('textarea').addEventListener('keydown', e=>{ if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){ e.preventDefault(); saveDraft(); } }, false);
   }
 
   function setMode(next){
