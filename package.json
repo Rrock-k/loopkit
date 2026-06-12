@@ -1,6 +1,6 @@
 {
   "name": "@rrock-k/loopkit",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": false,
   "description": "Portable feedback runtime for self-describing HTML artifacts.",
   "type": "module",

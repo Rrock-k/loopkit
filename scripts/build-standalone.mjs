@@ -40,7 +40,9 @@ function readStandaloneRuntime(distPath, fallbackPath) {
       if (!existsSync(resolved)) throw new Error(`Missing runtime chunk: ${resolved}`);
       return readFileSync(resolved, 'utf8').replace(/\s+/g, '');
     }).join('');
-    return Buffer.from(encoded, 'base64').toString('utf8');
+    const decoded = Buffer.from(encoded, 'base64').toString('utf8');
+    const patch = readStandalonePatch(dist);
+    return patch ? `${decoded}\n\n${patch}\ninstallVelocitySnap();\n` : decoded;
   }
 
   const relativeRuntimeMatch = dist.match(/new URL\(['"]([^'"]+)['"],\s*new URL\(['"]\.['"],\s*current\.src\)\)/);
@@ -58,4 +60,9 @@ function readChunkPaths(runtime) {
   const match = runtime.match(/const\s+CHUNKS\s*=\s*\[([\s\S]*?)\]/);
   if (!match) return [];
   return [...match[1].matchAll(/['"]([^'"]+)['"]/g)].map((item) => item[1]);
+}
+
+function readStandalonePatch(runtime) {
+  const match = runtime.match(/\/\/ LOOPKIT_STANDALONE_PATCH_START\n([\s\S]*?)\n\s*\/\/ LOOPKIT_STANDALONE_PATCH_END/);
+  return match ? match[1] : '';
 }
