@@ -16,17 +16,39 @@ LoopKit не является баг-трекером, Webflow-клоном ил
 
 ## Подключение
 
-### Linked source version
+### npm CDN
 
-Удобно при разработке:
+После публикации пакета:
 
 ```html
-<script src="./loopkit.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@rrock-k/loopkit@0.3.6/dist/loopkit.js"></script>
+```
+
+Для артефактов лучше фиксировать версию. `@latest` удобно только для быстрых экспериментов.
+
+### GitHub CDN
+
+Для теста конкретного коммита:
+
+```html
+<script src="https://cdn.jsdelivr.net/gh/Rrock-k/loopkit@<commit>/dist/loopkit.js"></script>
+```
+
+### Local dev
+
+```html
+<script src="../dist/loopkit.js"></script>
+```
+
+Перед локальной проверкой:
+
+```bash
+npm run build
 ```
 
 ### Standalone share version
 
-Удобно, когда нужен один файл. `loopkit.js` вшивается внутрь HTML build-скриптом.
+Удобно, когда нужен один файл. Runtime вшивается внутрь HTML build-скриптом.
 
 ```bash
 npm run standalone -- examples/basic.html examples/basic.standalone.html
@@ -60,13 +82,13 @@ DECISIONS:
   Play
 </button>
 
-<script src="./loopkit.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@rrock-k/loopkit@0.3.6/dist/loopkit.js"></script>
 ```
 
 ## Runtime modes
 
 ```text
-Mark up   — клик по элементу с data-loop-id и комментарий к нему
+Mark up   — клик по элементу и комментарий к нему
 Comments  — свободный pin-комментарий на экране
 Tweaks    — request-only: попросить агента добавить tweak-контролы в следующей версии
 Copy      — экспортировать feedback bundle для AI
@@ -76,26 +98,57 @@ Copy      — экспортировать feedback bundle для AI
 
 Runtime рендерит минималистичную floating-панель поверх артефакта. UI должен быть тихим: без тяжёлых зависимостей, без AI-glow, без лишних статусов. Панель можно скрыть, а при активном режиме LoopKit перехватывает клавиши, чтобы они не конфликтовали с самим артефактом.
 
-## Структура v0
+## Структура
 
 ```text
-README.md
-AGENTS.md
-PROTOCOL.md
-loopkit.js
-examples/basic.html
-scripts/validate.mjs
+src/loopkit.js              source entrypoint
+scripts/build.mjs           builds dist/loopkit.js
+scripts/validate.mjs        validates LoopKit artifacts
 scripts/build-standalone.mjs
+examples/basic.html
+dist/loopkit.js             generated package runtime
+dist/loopkit.*.js           versioned runtime files
 package.json
 LICENSE
 ```
 
+`src/*` — source of truth. `dist/*` публикуется в npm package и используется CDN.
+
 ## Команды
 
 ```bash
+npm run build
 npm run check
+npm test
+npm run pack:dry
 npm run validate -- examples/basic.html
 npm run standalone -- examples/basic.html examples/basic.standalone.html
+```
+
+## npm publish
+
+Пакет готовится как public scoped package:
+
+```text
+@rrock-k/loopkit
+```
+
+Релизный flow:
+
+```bash
+npm version patch
+git push
+git push --tags
+```
+
+Тег `v*` запускает `.github/workflows/publish.yml`, который собирает пакет, проверяет его и выполняет `npm publish --access public --provenance`.
+
+Для автоматической публикации нужно включить Trusted Publisher в npm package settings:
+
+```text
+Owner: Rrock-k
+Repository: loopkit
+Workflow filename: publish.yml
 ```
 
 ## Главные правила
