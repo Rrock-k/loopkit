@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync } from 'node:fs';
-import { dirname, extname, basename, join } from 'node:path';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { basename, dirname, extname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const input = process.argv[2];
 if (!input) {
@@ -10,7 +11,10 @@ if (!input) {
 
 const output = process.argv[3] || join(dirname(input), `${basename(input, extname(input))}.standalone.html`);
 const html = readFileSync(input, 'utf8');
-const runtime = readFileSync(new URL('../loopkit.js', import.meta.url), 'utf8');
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const distRuntime = join(root, 'dist', 'loopkit.js');
+const legacyRuntime = join(root, 'loopkit.js');
+const runtime = readStandaloneRuntime(distRuntime, legacyRuntime);
 
 const externalScriptPattern = /<script\s+[^>]*src=["'][^"']*loopkit\.js["'][^>]*><\/script>/i;
 if (!externalScriptPattern.test(html)) {
@@ -25,3 +29,16 @@ const standalone = html.replace(
 
 writeFileSync(output, standalone, 'utf8');
 console.log(`Wrote ${output}`);
+
+function readStandaloneRuntime(distPath, fallbackPath) {
+  const dist = existsSync(distPath) ? readFileSync(distPath, 'utf8') : '';
+  const relativeRuntimeMatch = dist.match(/new URL\(['"]([^'"]+)['"],\s*new URL\(['"]\.['"],\s*current\.src\)\)/);
+
+  if (relativeRuntimeMatch) {
+    const resolved = join(dirname(distPath), relativeRuntimeMatch[1]);
+    if (existsSync(resolved)) return readFileSync(resolved, 'utf8');
+  }
+
+  if (dist) return dist;
+  return readFileSync(fallbackPath, 'utf8');
+}
