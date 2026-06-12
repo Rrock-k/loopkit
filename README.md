@@ -21,7 +21,7 @@ LoopKit не является баг-трекером, Webflow-клоном ил
 После публикации пакета:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@rrock-k/loopkit@0.4.0/dist/loopkit.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@rrock-k/loopkit@0.4.1/dist/loopkit.js"></script>
 ```
 
 Для артефактов лучше фиксировать версию. `@latest` удобно только для быстрых экспериментов.
@@ -82,7 +82,7 @@ DECISIONS:
   Play
 </button>
 
-<script src="https://cdn.jsdelivr.net/npm/@rrock-k/loopkit@0.4.0/dist/loopkit.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@rrock-k/loopkit@0.4.1/dist/loopkit.js"></script>
 ```
 
 ## Runtime modes
@@ -96,7 +96,11 @@ Copy      — экспортировать feedback bundle для AI
 
 ## DOM Inspector
 
-В `0.4.0` Mark up может выбирать не только `data-loop-id`, но и обычные DOM-элементы. Если стабильного `data-loop-id` нет, target сохраняется как `dom-generated` с selector/tag/classes/text/rect. Видимые DOM-элементы имеют приоритет над `::before` / `::after`; для явного выбора pseudo-element можно удерживать Alt/Option.
+В `0.4.0+` Mark up может выбирать не только `data-loop-id`, но и обычные DOM-элементы. Если стабильного `data-loop-id` нет, target сохраняется как `dom-generated` с selector/tag/classes/text/rect. Видимые DOM-элементы имеют приоритет над `::before` / `::after`; для явного выбора pseudo-element можно удерживать Alt/Option.
+
+## Collapsed velocity snap
+
+В `0.4.1` перетаскивание свернутого LoopKit учитывает скорость движения. При отпускании snap-позиция считается не только от текущей точки, а от projected point: текущая точка + velocity projection. Быстрый flick может отправить свернутый элемент дальше, чем медленный drag.
 
 ## UI v0
 
