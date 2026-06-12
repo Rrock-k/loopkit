@@ -21,7 +21,7 @@ LoopKit не является баг-трекером, Webflow-клоном ил
 После публикации пакета:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@rrock-k/loopkit@0.4.1/dist/loopkit.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@rrock-k/loopkit@0.4.7/dist/loopkit.js"></script>
 ```
 
 Для артефактов лучше фиксировать версию. `@latest` удобно только для быстрых экспериментов.
@@ -54,68 +54,42 @@ npm run build
 npm run standalone -- examples/basic.html examples/basic.standalone.html
 ```
 
-Для пользователя это всё равно один HTML-файл. Standalone-файл генерируется командой, а не хранится как основной исходник.
-
-## Минимальный артефакт
-
-```html
-<script type="application/loopkit+json" id="loopkit-meta">
-{
-  "artifactId": "my-artifact",
-  "artifactVersion": "v1",
-  "title": "My Artifact"
-}
-</script>
-
-<script type="text/plain" id="loopkit-decisions">
-DECISIONS:
-- один самодостаточный HTML
-- минималистичный интерфейс
-- фидбэк живёт одну итерацию
-</script>
-
-<button
-  data-loop-id="start.play-button"
-  data-loop-kind="button"
-  data-loop-title="Play button"
->
-  Play
-</button>
-
-<script src="https://cdn.jsdelivr.net/npm/@rrock-k/loopkit@0.4.1/dist/loopkit.js"></script>
-```
-
 ## Runtime modes
 
 ```text
-Mark up   — клик по элементу и комментарий к нему
-Comments  — свободный pin-комментарий на экране
-Tweaks    — request-only: попросить агента добавить tweak-контролы в следующей версии
-Copy      — экспортировать feedback bundle для AI
+Mark up    — точная привязка к элементу
++ Comment  — свободный pin в точке клика, без визуальной привязки
+Tweaks     — request-only: попросить агента добавить tweak-контролы
+Copy       — экспортировать feedback bundle для AI
 ```
 
 ## DOM Inspector
 
-В `0.4.0+` Mark up может выбирать не только `data-loop-id`, но и обычные DOM-элементы. Если стабильного `data-loop-id` нет, target сохраняется как `dom-generated` с selector/tag/classes/text/rect. Видимые DOM-элементы имеют приоритет над `::before` / `::after`; для явного выбора pseudo-element можно удерживать Alt/Option.
+В `0.4.7` Mark up может выбирать не только `data-loop-id`, но и обычные DOM-элементы. Если стабильного `data-loop-id` нет, target сохраняется как `dom-generated`.
 
-## Collapsed velocity snap
+`+ Comment` не создаёт anchor. Он сохраняет точку клика и несколько кратких `approximateTargets[]`, которые помечены как approximate / not anchored.
 
-В `0.4.1` перетаскивание свернутого LoopKit учитывает скорость движения. При отпускании snap-позиция считается не только от текущей точки, а от projected point: текущая точка + velocity projection. Быстрый flick может отправить свернутый элемент дальше, чем медленный drag.
+Видимые DOM-элементы имеют приоритет над `::before` / `::after`; для явного выбора pseudo-element можно удерживать Alt/Option.
 
-## UI v0
+## Collapsed inertia snap
 
-Runtime рендерит минималистичную floating-панель поверх артефакта. UI должен быть тихим: без тяжёлых зависимостей, без AI-glow, без лишних статусов. Панель можно скрыть, а при активном режиме LoopKit перехватывает клавиши, чтобы они не конфликтовали с самим артефактом.
+Перетаскивание свернутого LoopKit учитывает короткую инерцию: если отпустить сразу после движения, snap считается от projected point. Если остановиться и подождать, инерция затухает и работает ближайшая точка.
+
+Target-zone подсветка итоговой позиции перескакивает между snap-точками.
+
+## Keyboard isolation
+
+Textarea внутри LoopKit изолирует keydown: пробел, backspace, delete и стрелки не уходят в основную презентацию.
 
 ## Структура
 
 ```text
-src/loopkit.js              source entrypoint
-scripts/build.mjs           builds dist/loopkit.js
+src/loopkit.js              source runtime
+scripts/build.mjs           generates dist/loopkit.js CDN entrypoint
 scripts/validate.mjs        validates LoopKit artifacts
 scripts/build-standalone.mjs
 examples/basic.html
-dist/loopkit.js             generated package runtime
-dist/chunks/*               runtime chunks used by the loader
+dist/loopkit.js             generated CDN/package entrypoint
 package.json
 LICENSE
 ```

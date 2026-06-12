@@ -1,294 +1,32 @@
 (function(){
   'use strict';
 
-  const VERSION = '0.4.1-loader';
-  const CHUNKS = [
-    'chunks/loopkit.0.4.0.0.txt',
-    'chunks/loopkit.0.4.0.1.txt',
-    'chunks/loopkit.0.4.0.2.txt',
-    'chunks/loopkit.0.4.0.3.txt',
-    'chunks/loopkit.0.4.0.4.txt',
-    'chunks/loopkit.0.4.0.5.txt'
-  ];
-
-  const current = document.currentScript;
-  const base = current && current.src ? new URL('.', current.src) : new URL('./', location.href);
+  const VERSION = '0.4.7-loader';
+  const FORMAT = 'gzip+base64';
+  const PAYLOAD = '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';
 
   if (window.LoopKit && window.LoopKit.__installed) return;
 
-  function decodeBase64Utf8(value) {
-    const binary = atob(value.replace(/\s+/g, ''));
+  async function decodeRuntime() {
+    const binary = atob(PAYLOAD.replace(/\s+/g, ''));
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-    return new TextDecoder().decode(bytes);
+
+    if (!('DecompressionStream' in window)) {
+      throw new Error('DecompressionStream is not supported in this browser');
+    }
+
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+    return await new Response(stream).text();
   }
 
-  async function load() {
-    const parts = await Promise.all(CHUNKS.map(async (path) => {
-      const url = new URL(path, base).href;
-      const response = await fetch(url, { cache: 'force-cache' });
-      if (!response.ok) throw new Error('Failed to load ' + url + ': ' + response.status);
-      return response.text();
-    }));
-
+  decodeRuntime().then((source) => {
     const script = document.createElement('script');
     script.dataset.loopkitRuntime = VERSION;
-    script.textContent = decodeBase64Utf8(parts.join(''));
+    script.dataset.loopkitFormat = FORMAT;
+    script.textContent = source;
     document.head.appendChild(script);
-    installVelocitySnap();
-  }
-
-  load().catch((error) => {
-    console.error('[LoopKit] failed to load runtime chunks', error);
+  }).catch((error) => {
+    console.error('[LoopKit] failed to load compressed runtime', error);
   });
-
-  // LOOPKIT_STANDALONE_PATCH_START
-  function installVelocitySnap() {
-    let tries = 0;
-    const timer = setInterval(() => {
-      const host = document.getElementById('loopkit-root');
-      const root = host && host.shadowRoot;
-      const edge = root && root.querySelector('.edge');
-      const zone = root && root.querySelector('.zone');
-      const api = window.LoopKit;
-
-      if (!host || !root || !edge || !zone || !api) {
-        tries += 1;
-        if (tries > 80) clearInterval(timer);
-        return;
-      }
-
-      clearInterval(timer);
-      patchVelocityEdge(host, root, edge, zone, api);
-    }, 50);
-  }
-
-  function patchVelocityEdge(host, root, edge, zone, api) {
-    if (edge.dataset.velocitySnap === '1') return;
-    edge.dataset.velocitySnap = '1';
-
-    let drag = null;
-
-    root.addEventListener('pointerdown', (event) => {
-      if (!event.composedPath().includes(edge)) return;
-      if (!host.classList.contains('collapsed')) return;
-
-      const rect = edge.getBoundingClientRect();
-      const time = performance.now();
-      drag = {
-        sx: event.clientX,
-        sy: event.clientY,
-        px: event.clientX,
-        py: event.clientY,
-        cx: rect.left + rect.width / 2,
-        cy: rect.top + rect.height / 2,
-        ox: event.clientX - (rect.left + rect.width / 2),
-        oy: event.clientY - (rect.top + rect.height / 2),
-        vx: 0,
-        vy: 0,
-        time,
-        pos: nearestPosition(event.clientX, event.clientY),
-        moved: false
-      };
-      edge.setPointerCapture && edge.setPointerCapture(event.pointerId);
-      stopVelocityEvent(event);
-    }, true);
-
-    root.addEventListener('pointermove', (event) => {
-      if (!drag || !event.composedPath().includes(edge)) return;
-
-      const now = performance.now();
-      const dt = Math.max(8, now - drag.time);
-      const vx = (event.clientX - drag.px) / dt;
-      const vy = (event.clientY - drag.py) / dt;
-      drag.vx = drag.vx * 0.55 + vx * 0.45;
-      drag.vy = drag.vy * 0.55 + vy * 0.45;
-      drag.px = event.clientX;
-      drag.py = event.clientY;
-      drag.time = now;
-
-      if (!drag.moved && Math.hypot(event.clientX - drag.sx, event.clientY - drag.sy) < 5) {
-        stopVelocityEvent(event);
-        return;
-      }
-
-      drag.moved = true;
-      edge.dataset.suppress = '1';
-      edge.classList.add('drag');
-
-      const x = event.clientX - drag.ox;
-      const y = event.clientY - drag.oy;
-      edge.style.setProperty('--dx', x + 'px');
-      edge.style.setProperty('--dy', y + 'px');
-      drag.cx = x;
-      drag.cy = y;
-
-      const projected = projectedPoint(drag, event.clientX, event.clientY);
-      drag.pos = nearestPosition(projected.x, projected.y);
-      showZone(zone, edge, drag.pos);
-      stopVelocityEvent(event);
-    }, true);
-
-    root.addEventListener('pointerup', (event) => {
-      if (!drag || !event.composedPath().includes(edge)) return;
-
-      const moved = drag.moved;
-      const projected = projectedPoint(drag, event.clientX, event.clientY);
-      const pos = nearestPosition(projected.x, projected.y);
-      const fromX = drag.cx;
-      const fromY = drag.cy;
-      drag = null;
-      edge.classList.remove('drag');
-
-      if (moved) {
-        snapEdge(host, zone, edge, api, pos, fromX, fromY);
-        setTimeout(() => { delete edge.dataset.suppress; }, 120);
-      } else if (api.expand) {
-        api.expand();
-      }
-      stopVelocityEvent(event);
-    }, true);
-
-    root.addEventListener('click', (event) => {
-      if (!event.composedPath().includes(edge)) return;
-      if (edge.dataset.suppress === '1') {
-        delete edge.dataset.suppress;
-        stopVelocityEvent(event);
-      }
-    }, true);
-  }
-
-  function projectedPoint(drag, x, y) {
-    const projectionMs = 220;
-    const maxProjection = 380;
-    const dx = clampVelocity(drag.vx * projectionMs, -maxProjection, maxProjection);
-    const dy = clampVelocity(drag.vy * projectionMs, -maxProjection, maxProjection);
-    return {
-      x: clampVelocity(x + dx, 0, window.innerWidth || 1),
-      y: clampVelocity(y + dy, 0, window.innerHeight || 1)
-    };
-  }
-
-  function snapEdge(host, zone, edge, api, pos, fromX, fromY) {
-    const point = positionPoint(edge, pos);
-    edge.style.setProperty('--sx', fromX + 'px');
-    edge.style.setProperty('--sy', fromY + 'px');
-    edge.classList.add('snap');
-    showZone(zone, edge, pos);
-
-    requestAnimationFrame(() => {
-      edge.style.setProperty('--sx', point.x + 'px');
-      edge.style.setProperty('--sy', point.y + 'px');
-    });
-
-    setTimeout(() => {
-      host.dataset.pos = pos;
-      if (api.meta && api.meta.artifactId) {
-        localStorage.setItem('loopkit:pos:' + api.meta.artifactId, pos);
-      }
-      edge.classList.remove('snap');
-      edge.style.removeProperty('--sx');
-      edge.style.removeProperty('--sy');
-      hideZone(zone);
-    }, 240);
-  }
-
-  function showZone(zone, edge, pos) {
-    const point = positionPoint(edge, pos);
-    zone.dataset.pos = pos;
-    zone.style.left = point.x + 'px';
-    zone.style.top = point.y + 'px';
-    zone.classList.add('show');
-  }
-
-  function hideZone(zone) {
-    zone.classList.remove('show');
-  }
-
-  function positionPoint(edge, pos) {
-    const rect = edge.getBoundingClientRect();
-    const width = rect.width || 98;
-    const height = rect.height || 32;
-    const pad = 14;
-    const viewportWidth = window.innerWidth || 1;
-    const viewportHeight = window.innerHeight || 1;
-    const top = -14;
-    const map = {
-      'top-notch': { x: viewportWidth / 2, y: top + 15 },
-      'top-left': { x: pad + width / 2, y: pad + height / 2 },
-      'top-mid-left': { x: viewportWidth * 0.25, y: pad + height / 2 },
-      'top-center': { x: viewportWidth / 2, y: pad + height / 2 },
-      'top-mid-right': { x: viewportWidth * 0.75, y: pad + height / 2 },
-      'top-right': { x: viewportWidth - pad - width / 2, y: pad + height / 2 },
-      'right-top': { x: viewportWidth - pad - width / 2, y: viewportHeight * 0.25 },
-      'right-center': { x: viewportWidth - pad - width / 2, y: viewportHeight / 2 },
-      'right-bottom': { x: viewportWidth - pad - width / 2, y: viewportHeight * 0.75 },
-      'bottom-right': { x: viewportWidth - pad - width / 2, y: viewportHeight - pad - height / 2 },
-      'bottom-mid-right': { x: viewportWidth * 0.75, y: viewportHeight - pad - height / 2 },
-      'bottom-center': { x: viewportWidth / 2, y: viewportHeight - pad - height / 2 },
-      'bottom-mid-left': { x: viewportWidth * 0.25, y: viewportHeight - pad - height / 2 },
-      'bottom-left': { x: pad + width / 2, y: viewportHeight - pad - height / 2 },
-      'left-bottom': { x: pad + width / 2, y: viewportHeight * 0.75 },
-      'left-center': { x: pad + width / 2, y: viewportHeight / 2 },
-      'left-top': { x: pad + width / 2, y: viewportHeight * 0.25 }
-    };
-    return map[pos] || map['top-right'];
-  }
-
-  function nearestPosition(x, y) {
-    const viewportWidth = window.innerWidth || 1;
-    const viewportHeight = window.innerHeight || 1;
-
-    if (y <= 34 && x > viewportWidth * 0.18 && x < viewportWidth * 0.82) return 'top-notch';
-
-    const nearest = [
-      ['top', y],
-      ['right', viewportWidth - x],
-      ['bottom', viewportHeight - y],
-      ['left', x]
-    ].sort((a, b) => a[1] - b[1])[0][0];
-
-    if (nearest === 'top') return horizontalBucket('top', x, viewportWidth);
-    if (nearest === 'bottom') return horizontalBucket('bottom', x, viewportWidth);
-    return verticalBucket(nearest, y, viewportHeight);
-  }
-
-  function horizontalBucket(edge, x, viewportWidth) {
-    const ratio = x / (viewportWidth || 1);
-    if (edge === 'top') {
-      if (ratio < 0.16) return 'top-left';
-      if (ratio < 0.38) return 'top-mid-left';
-      if (ratio < 0.62) return 'top-center';
-      if (ratio < 0.84) return 'top-mid-right';
-      return 'top-right';
-    }
-    if (ratio < 0.16) return 'bottom-left';
-    if (ratio < 0.38) return 'bottom-mid-left';
-    if (ratio < 0.62) return 'bottom-center';
-    if (ratio < 0.84) return 'bottom-mid-right';
-    return 'bottom-right';
-  }
-
-  function verticalBucket(edge, y, viewportHeight) {
-    const ratio = y / (viewportHeight || 1);
-    if (edge === 'right') {
-      if (ratio < 0.34) return 'right-top';
-      if (ratio < 0.66) return 'right-center';
-      return 'right-bottom';
-    }
-    if (ratio < 0.34) return 'left-top';
-    if (ratio < 0.66) return 'left-center';
-    return 'left-bottom';
-  }
-
-  function clampVelocity(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-  }
-
-  function stopVelocityEvent(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (event.stopImmediatePropagation) event.stopImmediatePropagation();
-  }
-  // LOOPKIT_STANDALONE_PATCH_END
 })();
