@@ -1,20 +1,45 @@
 {
-  "name": "loopkit",
-  "version": "0.3.2",
+  "name": "@rrock-k/loopkit",
+  "version": "0.3.6",
   "private": false,
   "description": "Portable feedback runtime for self-describing HTML artifacts.",
   "type": "module",
   "main": "dist/loopkit.js",
+  "browser": "dist/loopkit.js",
+  "unpkg": "dist/loopkit.js",
+  "jsdelivr": "dist/loopkit.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "PROTOCOL.md",
+    "AGENTS.md"
+  ],
   "scripts": {
+    "build": "node scripts/build.mjs",
     "validate": "node scripts/validate.mjs",
     "standalone": "node scripts/build-standalone.mjs",
-    "check": "node --check dist/loopkit.js && node --check loopkit.js && node --check scripts/validate.mjs && node --check scripts/build-standalone.mjs"
+    "check": "npm run build && node --check src/loopkit.js && node --check dist/loopkit.js && node --check scripts/build.mjs && node --check scripts/validate.mjs && node --check scripts/build-standalone.mjs",
+    "test": "npm run check && npm run validate -- examples/basic.html && npm run standalone -- examples/basic.html examples/basic.generated.standalone.html && npm run validate -- examples/basic.generated.standalone.html",
+    "pack:dry": "npm pack --dry-run"
   },
   "keywords": [
     "ai",
     "html",
     "feedback",
-    "artifact"
+    "artifact",
+    "annotation"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rrock-k/loopkit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Rrock-k/loopkit/issues"
+  },
+  "homepage": "https://github.com/Rrock-k/loopkit#readme",
+  "publishConfig": {
+    "access": "public"
+  }
 }
