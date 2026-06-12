@@ -45,10 +45,11 @@ function readStandaloneRuntime(distPath, fallbackPath) {
     return patch ? `${decoded}\n\n${patch}\ninstallVelocitySnap();\n` : decoded;
   }
 
-  const relativeRuntimeMatch = dist.match(/new URL\(['"]([^'"]+)['"],\s*new URL\(['"]\.['"],\s*current\.src\)\)/);
+  const directRuntimeMatch = dist.match(/new URL\(['"]([^'"]+)['"],\s*base\)/)
+    || dist.match(/new URL\(['"]([^'"]+)['"],\s*new URL\(['"]\.['"],\s*current\.src\)\)/);
 
-  if (relativeRuntimeMatch) {
-    const resolved = join(dirname(distPath), relativeRuntimeMatch[1]);
+  if (directRuntimeMatch) {
+    const resolved = join(dirname(distPath), directRuntimeMatch[1]);
     if (existsSync(resolved)) return readFileSync(resolved, 'utf8');
   }
 
