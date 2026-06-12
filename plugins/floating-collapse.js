@@ -12,6 +12,7 @@
 
   let drag = null;
   let suppressClick = false;
+  let frame = 0;
 
   function install(){
     const host = document.getElementById('loopkit-root');
@@ -56,7 +57,7 @@
         opacity: .94 !important;
         cursor: grab !important;
         user-select: none !important;
-        transition: opacity .16s ease, transform .16s ease, box-shadow .16s ease !important;
+        transition: opacity .16s ease, box-shadow .16s ease !important;
       }
       :host(.is-collapsed) .edge { display: inline-flex !important; }
       .edge:hover, .edge:focus-visible {
@@ -67,6 +68,13 @@
         cursor: grabbing !important;
         opacity: 1 !important;
         transition: none !important;
+        will-change: left, top, transform;
+      }
+      .edge.is-snapping {
+        cursor: grabbing !important;
+        opacity: 1 !important;
+        transition: left .2s cubic-bezier(.2,.8,.2,1), top .2s cubic-bezier(.2,.8,.2,1), box-shadow .16s ease !important;
+        will-change: left, top, transform;
       }
       .edge-grip {
         width: 20px;
@@ -132,9 +140,16 @@
 
     edge.addEventListener('pointerdown', (event) => {
       if (!host.classList.contains('is-collapsed')) return;
+      const rect = edge.getBoundingClientRect();
       drag = {
         startX: event.clientX,
         startY: event.clientY,
+        currentX: rect.left + rect.width / 2,
+        currentY: rect.top + rect.height / 2,
+        targetX: rect.left + rect.width / 2,
+        targetY: rect.top + rect.height / 2,
+        offsetX: event.clientX - (rect.left + rect.width / 2),
+        offsetY: event.clientY - (rect.top + rect.height / 2),
         moved: false
       };
       suppressClick = false;
@@ -146,14 +161,13 @@
       const dx = event.clientX - drag.startX;
       const dy = event.clientY - drag.startY;
       if (!drag.moved && Math.hypot(dx, dy) < 6) return;
+
       drag.moved = true;
       suppressClick = true;
+      drag.targetX = event.clientX - drag.offsetX;
+      drag.targetY = event.clientY - drag.offsetY;
       edge.classList.add('is-dragging');
-      edge.style.left = event.clientX + 'px';
-      edge.style.top = event.clientY + 'px';
-      edge.style.right = 'auto';
-      edge.style.bottom = 'auto';
-      edge.style.transform = 'translate(-50%, -50%)';
+      startFollow(edge);
       event.preventDefault();
       event.stopPropagation();
     }, true);
@@ -161,11 +175,15 @@
     edge.addEventListener('pointerup', (event) => {
       if (!drag) return;
       const moved = drag.moved;
+      const currentX = drag.currentX;
+      const currentY = drag.currentY;
       drag = null;
+      cancelAnimationFrame(frame);
       edge.classList.remove('is-dragging');
-      edge.removeAttribute('style');
+
       if (moved) {
-        setPosition(nearestPosition(event.clientX, event.clientY));
+        const position = nearestPosition(event.clientX, event.clientY);
+        animateSnap(edge, host, position, currentX, currentY, setPosition);
         event.preventDefault();
         event.stopPropagation();
         setTimeout(() => { suppressClick = false; }, 0);
@@ -181,6 +199,66 @@
     }, true);
 
     return true;
+  }
+
+  function startFollow(edge){
+    if (frame) return;
+    const tick = () => {
+      frame = 0;
+      if (!drag) return;
+      drag.currentX += (drag.targetX - drag.currentX) * 0.34;
+      drag.currentY += (drag.targetY - drag.currentY) * 0.34;
+      edge.style.left = drag.currentX + 'px';
+      edge.style.top = drag.currentY + 'px';
+      edge.style.right = 'auto';
+      edge.style.bottom = 'auto';
+      edge.style.transform = 'translate(-50%, -50%)';
+      if (Math.abs(drag.targetX - drag.currentX) > 0.5 || Math.abs(drag.targetY - drag.currentY) > 0.5) {
+        frame = requestAnimationFrame(tick);
+      }
+    };
+    frame = requestAnimationFrame(tick);
+  }
+
+  function animateSnap(edge, host, position, fromX, fromY, setPosition){
+    const target = positionPoint(edge, position);
+    edge.classList.add('is-snapping');
+    edge.style.left = fromX + 'px';
+    edge.style.top = fromY + 'px';
+    edge.style.right = 'auto';
+    edge.style.bottom = 'auto';
+    edge.style.transform = 'translate(-50%, -50%)';
+
+    requestAnimationFrame(() => {
+      edge.style.left = target.x + 'px';
+      edge.style.top = target.y + 'px';
+    });
+
+    setTimeout(() => {
+      setPosition(position);
+      edge.classList.remove('is-snapping');
+      edge.removeAttribute('style');
+    }, 220);
+  }
+
+  function positionPoint(edge, position){
+    const rect = edge.getBoundingClientRect();
+    const width = rect.width || 98;
+    const height = rect.height || 32;
+    const pad = 14;
+    const w = window.innerWidth || 1;
+    const h = window.innerHeight || 1;
+    const map = {
+      'top-left': { x: pad + width / 2, y: pad + height / 2 },
+      'top-center': { x: w / 2, y: pad + height / 2 },
+      'top-right': { x: w - pad - width / 2, y: pad + height / 2 },
+      'right-center': { x: w - pad - width / 2, y: h / 2 },
+      'bottom-right': { x: w - pad - width / 2, y: h - pad - height / 2 },
+      'bottom-center': { x: w / 2, y: h - pad - height / 2 },
+      'bottom-left': { x: pad + width / 2, y: h - pad - height / 2 },
+      'left-center': { x: pad + width / 2, y: h / 2 }
+    };
+    return map[position] || map['top-right'];
   }
 
   function nearestPosition(x, y){
