@@ -1,15 +1,14 @@
 {
   "name": "@rrock-k/loopkit",
-  "version": "0.4.1",
+  "version": "0.4.7",
   "private": false,
   "description": "Portable feedback runtime for self-describing HTML artifacts.",
   "type": "module",
   "main": "dist/loopkit.js",
   "browser": "dist/loopkit.js",
-  "unpkg": "dist/loopkit.js",
-  "jsdelivr": "dist/loopkit.js",
   "files": [
     "dist",
+    "src",
     "README.md",
     "LICENSE",
     "PROTOCOL.md",
@@ -31,14 +30,6 @@
     "annotation"
   ],
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Rrock-k/loopkit.git"
-  },
-  "bugs": {
-    "url": "https://github.com/Rrock-k/loopkit/issues"
-  },
-  "homepage": "https://github.com/Rrock-k/loopkit#readme",
   "publishConfig": {
     "access": "public"
   }
