@@ -1,1 +1,0 @@
-/mnt/data/loopkit_compact_0_4_0.js
