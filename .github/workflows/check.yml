@@ -12,7 +12,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm run check
-      - run: npm run validate -- examples/basic.html
-      - run: npm run standalone -- examples/basic.html examples/basic.generated.standalone.html
-      - run: npm run validate -- examples/basic.generated.standalone.html
+          package-manager-cache: false
+      - run: npm test
+      - run: npm run pack:dry
