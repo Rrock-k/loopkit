@@ -21,7 +21,7 @@ LoopKit не является баг-трекером, Webflow-клоном ил
 После публикации пакета:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@rrock-k/loopkit@0.3.6/dist/loopkit.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@rrock-k/loopkit@0.4.0/dist/loopkit.js"></script>
 ```
 
 Для артефактов лучше фиксировать версию. `@latest` удобно только для быстрых экспериментов.
@@ -82,7 +82,7 @@ DECISIONS:
   Play
 </button>
 
-<script src="https://cdn.jsdelivr.net/npm/@rrock-k/loopkit@0.3.6/dist/loopkit.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@rrock-k/loopkit@0.4.0/dist/loopkit.js"></script>
 ```
 
 ## Runtime modes
@@ -93,6 +93,10 @@ Comments  — свободный pin-комментарий на экране
 Tweaks    — request-only: попросить агента добавить tweak-контролы в следующей версии
 Copy      — экспортировать feedback bundle для AI
 ```
+
+## DOM Inspector
+
+В `0.4.0` Mark up может выбирать не только `data-loop-id`, но и обычные DOM-элементы. Если стабильного `data-loop-id` нет, target сохраняется как `dom-generated` с selector/tag/classes/text/rect. Видимые DOM-элементы имеют приоритет над `::before` / `::after`; для явного выбора pseudo-element можно удерживать Alt/Option.
 
 ## UI v0
 
@@ -107,7 +111,7 @@ scripts/validate.mjs        validates LoopKit artifacts
 scripts/build-standalone.mjs
 examples/basic.html
 dist/loopkit.js             generated package runtime
-dist/loopkit.*.js           versioned runtime files
+dist/chunks/*               runtime chunks used by the loader
 package.json
 LICENSE
 ```

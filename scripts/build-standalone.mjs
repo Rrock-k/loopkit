@@ -32,6 +32,17 @@ console.log(`Wrote ${output}`);
 
 function readStandaloneRuntime(distPath, fallbackPath) {
   const dist = existsSync(distPath) ? readFileSync(distPath, 'utf8') : '';
+  const chunkPaths = readChunkPaths(dist);
+
+  if (chunkPaths.length) {
+    const encoded = chunkPaths.map((chunkPath) => {
+      const resolved = join(dirname(distPath), chunkPath);
+      if (!existsSync(resolved)) throw new Error(`Missing runtime chunk: ${resolved}`);
+      return readFileSync(resolved, 'utf8').replace(/\s+/g, '');
+    }).join('');
+    return Buffer.from(encoded, 'base64').toString('utf8');
+  }
+
   const relativeRuntimeMatch = dist.match(/new URL\(['"]([^'"]+)['"],\s*new URL\(['"]\.['"],\s*current\.src\)\)/);
 
   if (relativeRuntimeMatch) {
@@ -41,4 +52,10 @@ function readStandaloneRuntime(distPath, fallbackPath) {
 
   if (dist) return dist;
   return readFileSync(fallbackPath, 'utf8');
+}
+
+function readChunkPaths(runtime) {
+  const match = runtime.match(/const\s+CHUNKS\s*=\s*\[([\s\S]*?)\]/);
+  if (!match) return [];
+  return [...match[1].matchAll(/['"]([^'"]+)['"]/g)].map((item) => item[1]);
 }
