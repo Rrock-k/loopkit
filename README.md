@@ -96,6 +96,25 @@ LICENSE
 
 `src/*` — source of truth. `dist/*` публикуется в npm package и используется CDN.
 
+## Dist workflow
+
+`Build dist` workflow запускается на push, если изменились:
+
+```text
+src/**
+scripts/build.mjs
+package.json
+.github/workflows/build-dist.yml
+```
+
+Он выполняет `npm run build`. Если `dist/loopkit.js` изменился, workflow сам коммитит его обратно в ту же ветку:
+
+```text
+build: update dist [skip ci]
+```
+
+Чтобы не было бесконечного CI-loop, job не запускается от `github-actions[bot]`, а commit содержит `[skip ci]`.
+
 ## Команды
 
 ```bash
