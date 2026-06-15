@@ -4,10 +4,12 @@ import { dirname, join } from 'node:path';
 
 const sourcePath = join(process.cwd(), 'src', 'loopkit.js');
 const formsPath = join(process.cwd(), 'src', 'loopkit.forms.js');
+const uiStatePath = join(process.cwd(), 'src', 'loopkit.ui-state.js');
 const outputPath = join(process.cwd(), 'dist', 'loopkit.js');
 
 const parts = [readFileSync(sourcePath, 'utf8')];
 if (existsSync(formsPath)) parts.push(readFileSync(formsPath, 'utf8'));
+if (existsSync(uiStatePath)) parts.push(readFileSync(uiStatePath, 'utf8'));
 
 const runtime = parts.join('\n\n').replace(/\r\n/g, '\n');
 
