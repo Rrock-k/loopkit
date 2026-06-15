@@ -27,18 +27,19 @@ jobs:
           package-manager-cache: false
 
       - run: npm run build
+      - run: node --check src/loopkit.js
       - run: node --check dist/loopkit.js
 
-      - name: Commit generated dist
+      - name: Commit generated runtime
         shell: bash
         run: |
-          if git diff --quiet -- dist/loopkit.js; then
-            echo "dist/loopkit.js is already up to date"
+          if git diff --quiet -- src/loopkit.js dist/loopkit.js; then
+            echo "runtime files are already up to date"
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dist/loopkit.js
-          git commit -m "build: update dist [skip ci]"
+          git add src/loopkit.js dist/loopkit.js
+          git commit -m "build: update runtime [skip ci]"
           git push

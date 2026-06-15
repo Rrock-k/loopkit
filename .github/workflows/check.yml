@@ -9,9 +9,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          show-progress: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           package-manager-cache: false
-      - run: npm test
-      - run: npm run pack:dry
+      - name: Build runtime
+        run: npm run build
+      - name: Check JavaScript syntax
+        run: |
+          node --check src/loopkit.js
+          node --check dist/loopkit.js
+          node --check scripts/build.mjs
+          node --check scripts/validate.mjs
+          node --check scripts/build-standalone.mjs
+      - name: Validate example
+        run: npm run validate -- examples/basic.html
+      - name: Build standalone example
+        run: npm run standalone -- examples/basic.html examples/basic.generated.standalone.html
+      - name: Validate standalone example
+        run: npm run validate -- examples/basic.generated.standalone.html
+      - name: Pack dry run
+        run: npm run pack:dry
