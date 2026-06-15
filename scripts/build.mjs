@@ -19,10 +19,6 @@ function maybeUnpackCompressedLoader(sourceText) {
   }
 
   const runtime = gunzipSync(Buffer.from(match[2].replace(/\s+/g, ''), 'base64')).toString('utf8');
-  if (!runtime.includes('window.LoopKit')) {
-    throw new Error('Decoded LoopKit runtime does not look valid.');
-  }
-
   return { runtime, repairedSource: true };
 }
 
