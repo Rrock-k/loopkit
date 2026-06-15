@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { gunzipSync } from 'node:zlib';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -7,26 +8,33 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const source = join(root, 'src', 'loopkit.js');
 const output = join(root, 'dist', 'loopkit.js');
 
-readFileSync(source, 'utf8');
+function maybeUnpackCompressedLoader(sourceText) {
+  if (!sourceText.includes("FORMAT = 'gzip+base64'") && !sourceText.includes('FORMAT = "gzip+base64"')) {
+    return { runtime: sourceText, repairedSource: false };
+  }
 
-const loader = `(function(){
-  'use strict';
+  const match = sourceText.match(/const\s+PAYLOAD\s*=\s*(['"])([\s\S]*?)\1\s*;/);
+  if (!match) {
+    throw new Error('Compressed LoopKit loader detected, but PAYLOAD was not found.');
+  }
 
-  const VERSION = '0.4.7-dist-loader';
-  const current = document.currentScript;
-  const base = current && current.src ? new URL('.', current.src) : new URL('./', location.href);
-  const runtimeUrl = new URL('../src/loopkit.js', base).href;
+  const runtime = gunzipSync(Buffer.from(match[2].replace(/\s+/g, ''), 'base64')).toString('utf8');
+  if (!runtime.includes('window.LoopKit')) {
+    throw new Error('Decoded LoopKit runtime does not look valid.');
+  }
 
-  if (window.LoopKit && window.LoopKit.__installed) return;
+  return { runtime, repairedSource: true };
+}
 
-  const el = document.createElement('script');
-  el.src = runtimeUrl;
-  el.dataset.loopkitRuntime = VERSION;
-  document.head.appendChild(el);
-})();
-`;
+const sourceText = readFileSync(source, 'utf8');
+const { runtime, repairedSource } = maybeUnpackCompressedLoader(sourceText);
+
+if (repairedSource) {
+  writeFileSync(source, runtime, 'utf8');
+  console.log('Repaired src/loopkit.js from compressed loader to readable runtime.');
+}
 
 mkdirSync(dirname(output), { recursive: true });
-writeFileSync(output, loader, 'utf8');
+writeFileSync(output, runtime, 'utf8');
 
-console.log(`Built ${output}`);
+console.log(`Built self-contained ${output}`);
