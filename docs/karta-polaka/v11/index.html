@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Karta Polaka — clean course v11</title>
+
+<script type="application/loopkit+json" id="loopkit-meta">
+{
+  "artifactId": "karta-polaka-clean-course",
+  "artifactVersion": "v11-slide-transition-body-fill",
+  "title": "Karta Polaka — clean course v11",
+  "description": "Чистый минималистичный курс-презентация: тема 1, рассказ о себе. Версия с мягкой анимацией смены слайдов и формами, занимающими всю высоту тела карточки."
+}
+</script>
+
+<script type="text/plain" id="loopkit-decisions">
+DECISIONS:
+- Это чистый стартовый курс, без переноса тестовых ответов и разборов.
+- Обучающие материалы идут в формате презентации, без длинного скролла.
+- Один слайд = один смысл.
+- Одна тема = одна презентация. Сейчас тема 1: рассказ о себе.
+- HTML — долговременная учебная тетрадь и рабочая поверхность.
+- Интерактив идёт через LoopKit Forms: data-loop-form / data-loop-field / data-loop-submit.
+- Отдельного Study bundle нет. Экспорт только через LoopKit Feedback → Copy for AI или финальную кнопку "Скопировать результат".
+- После submit формы слайд автоматически переходит дальше.
+- Инпутов на одном слайде минимум: один вопрос, одна маленькая задача.
+- Стиль: спокойный минимализм, без градиентов, без декоративного шума.
+- Не добавлять транскрипции и лишние подсказки чтения; фокус на польском тексте.
+- Sidebar имеет один внешний скролл, без вложенных скроллов.
+- В свернутом sidebar флаг скрывается; сворачивание анимировано.
+- Space переключает слайд только если фокус не внутри input/textarea/select/button/contenteditable.
+- Тултипы должны содержать конкретную полезную подсказку, а не технический placeholder.
+- Финальный слайд говорит человеческим языком и не показывает кнопку следующей темы, пока следующая тема реально не добавлена.
+- Пустые ответы не отправляются: сначала нужно вписать текст или выбрать вариант.
+- Модальное окно полного текста закрывается по Escape.
+- На узких экранах sidebar по умолчанию компактный, но кнопка раскрытия всегда видима.
+- Слайды можно переключать свайпом влево/вправо на touch-устройствах.
+- Карточка слайда может скроллиться внутри себя, если контент не помещается на экран.
+- Tooltip не хранит полный текст внутри кнопки и позиционируется поверх карточки без обрезания.
+- Placeholder не подсказывает готовый ответ, а только объясняет формат ввода.
+- При уходе со слайда заполненная форма автоматически сохраняется через LoopKit submit.
+- Кнопка формы называется "Продолжить"; после валидного ответа она сохраняет форму и переводит на следующий слайд.
+- Озвучка польских фраз идёт через встроенный браузерный Web Speech API с языком pl-PL.
+- На десктопе sidebar по умолчанию остаётся раскрытым; компактный режим включается автоматически только на узких экранах или вручную.
+- Нижняя навигация компактная: без больших кнопок, основной переход — Продолжить, свайп, стрелки, sidebar.
+- Верх и низ карточки фиксированы; при нехватке места скроллится только тело слайда.
+- Внутренний скролл карточки включается только если контент реально не помещается.
+- Озвучка запускается только нажатием на отдельную кнопку play, не по клику на текст.
+- Кнопки play показываются только рядом с польским текстом.
+- Карточка презентации снова центрируется на рабочей области.
+- Контент слайда по умолчанию центрируется внутри карточки по вертикали; при overflow тело слайда скроллится сверху.
+- Большие внутренние отступы карточки возвращены для спокойного презентационного вида.
+- LoopKit runtime подключается внешним CDN script в конце HTML.
+- Русские заголовки в заданиях вторичны; главным визуальным текстом остаётся польский вопрос.
+- Типографика сведена к небольшому UI-kit: меньше скачков размеров между типами слайдов.
+- Play-кнопка располагается inline сразу после польской фразы.
+- Play-кнопка держится вместе с последним словом и выравнивается по центру строки.
+- Карточка имеет ограниченную максимальную ширину и не растягивается на весь доступный экран.
+- Форма внутри slide-body занимает всю доступную высоту, чтобы не было пустого внешнего зазора между контейнером и контентом.
+- Смена слайдов анимируется мягким горизонтальным slide/fade; при reduced motion анимация отключается.
+</script>
+
+<script type="text/plain" id="loopkit-agent-instructions">
+LOOPKIT AGENT INSTRUCTIONS:
+1. Treat form.submit as structured learning state.
+2. Treat ui.state as UI/settings state to carry into the next version when reasonable.
+3. Treat topic.request as user's request to generate the next topic.
+4. Treat comment.pin, markup.comment, and tweak.request as UI/content feedback.
+5. If confidence is low or an answer is empty/unclear, create one easier follow-up slide.
+6. Preserve the slide-deck format: no scrolling, one slide = one meaning.
+7. Preserve data-loop-id anchors where the same slide/component still exists.
+8. Future lessons should be added as new topics in the sidebar.
+9. Do not duplicate full form data in markdown; JSON is the source of truth.
+</script>
+<link rel="stylesheet" href="./styles.css">
+</head>
+
+<body>
+<div class="app" id="app">
+  <aside class="sidebar" data-loop-id="sidebar" data-loop-title="Navigation sidebar">
+    <div class="side-head" data-loop-id="sidebar.header" data-loop-title="Sidebar header">
+      <span class="flag" aria-hidden="true"><span></span><span></span></span>
+      <span class="brand">Karta Polaka</span>
+      <button class="collapse" id="collapseSidebar" aria-label="Свернуть меню">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+    </div>
+    <div class="side-scroll" data-loop-id="sidebar.scroll" data-loop-title="Sidebar scroll area">
+      <section class="topic active" data-loop-id="topic.intro" data-loop-title="Topic 1: Рассказ о себе">
+        <button class="topic-head" type="button">
+          <span class="topic-no">1</span>
+          <span class="topic-text"><span class="topic-title">Рассказ о себе</span><span class="topic-meta">чистый старт · урок 1</span></span>
+        </button>
+        <div class="topic-body" id="slideNav"></div>
+      </section>
+      <section class="topic locked" data-loop-id="topic.family" data-loop-title="Future topic: Семья и корни">
+        <button class="topic-head" disabled><span class="topic-no">2</span><span class="topic-text"><span class="topic-title">Семья и корни</span><span class="topic-meta">следующая тема</span></span></button>
+      </section>
+      <section class="topic locked" data-loop-id="topic.card" data-loop-title="Future topic: Почему Карта поляка">
+        <button class="topic-head" disabled><span class="topic-no">3</span><span class="topic-text"><span class="topic-title">Почему Карта поляка</span><span class="topic-meta">позже</span></span></button>
+      </section>
+      <section class="topic locked" data-loop-id="topic.poland" data-loop-title="Future topic: Польша">
+        <button class="topic-head" disabled><span class="topic-no">4</span><span class="topic-text"><span class="topic-title">Польша</span><span class="topic-meta">символы · праздники</span></span></button>
+      </section>
+    </div>
+    <div class="side-foot">
+      <div class="hint">Space / → — дальше. На телефоне можно листать свайпом.</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar" data-loop-id="topbar" data-loop-title="Top bar">
+      <div class="breadcrumbs"><span>Тема 1</span><span>›</span><span class="current" id="crumb">Рассказ о себе</span></div>
+      <div class="status">
+        <span class="dot" id="loopStatusDot"></span>
+        <span id="loopStatusText">Сохранение: загружается</span>
+        <div class="progress-track"><div class="progress" id="progress"></div></div>
+      </div>
+    </header>
+    <section class="deck" id="deck" data-loop-id="deck" data-loop-title="Slide deck"></section>
+    <footer class="controls" data-loop-id="controls" data-loop-title="Slide controls">
+      <button class="nav-btn" id="prevBtn">← Назад</button>
+      <div class="dots" id="dots"></div>
+      <button class="nav-btn primary" id="nextBtn">Дальше →</button>
+    </footer>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Полный текст</h3>
+      <button class="close" id="closeModal">×</button>
+    </div>
+    <div class="mono">
+      Nazywam się Anastazja.<br>
+      Pochodzę z Rosji, a dokładniej z Kaukazu.<br>
+      Urodziłam się w Nalczyku, w Kabardo-Bałkarii.<br>
+      Teraz mieszkam w Gruzji.<br>
+      Znam język polski tylko trochę.<br>
+      Chcę lepiej mówić po polsku.<br>
+      Interesuje mnie polska kultura.<br>
+      Chcę mówić po polsku, ponieważ moja babcia była Polką.
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="help-tooltip" id="helpTooltip" role="tooltip"></div>
+<script src="./app.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Rrock-k/loopkit@7ca4bf9ec6fe0b77105c3febd0f176b7a5c9327e/dist/loopkit.js"></script>
+</body>
+</html>
