@@ -1,6 +1,6 @@
 {
   "name": "@rrock-k/loopkit",
-  "version": "0.4.9",
+  "version": "0.4.10",
   "private": false,
   "description": "Portable feedback runtime for self-describing HTML artifacts.",
   "type": "module",
@@ -18,7 +18,7 @@
     "build": "node scripts/build.mjs",
     "validate": "node scripts/validate.mjs",
     "standalone": "node scripts/build-standalone.mjs",
-    "check": "npm run build && node --check src/loopkit.js && node --check src/loopkit.forms.js && node --check dist/loopkit.js && node --check scripts/build.mjs && node --check scripts/validate.mjs && node --check scripts/build-standalone.mjs",
+    "check": "npm run build && node --check src/loopkit.js && node --check src/loopkit.forms.js && node --check src/loopkit.ui-state.js && node --check dist/loopkit.js && node --check scripts/build.mjs && node --check scripts/validate.mjs && node --check scripts/build-standalone.mjs",
     "test": "npm run check && npm run validate -- examples/basic.html && npm run standalone -- examples/basic.html examples/basic.generated.standalone.html && npm run validate -- examples/basic.generated.standalone.html",
     "pack:dry": "npm pack --dry-run"
   },
