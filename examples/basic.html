@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -10,15 +10,15 @@
     "artifactId": "loopkit-basic-example",
     "artifactVersion": "v1",
     "title": "LoopKit Basic Artifact",
-    "description": "Минимальный HTML-артефакт для проверки LoopKit."
+    "description": "Minimal HTML artifact for checking LoopKit."
   }
   </script>
 
   <script type="text/plain" id="loopkit-decisions">
 DECISIONS:
-- Артефакт должен оставаться простым одиночным HTML.
-- Feedback bundle живёт одну итерацию.
-- Между версиями сохраняются только DECISIONS.
+- Keep the artifact as a simple single HTML file.
+- Feedback bundle lives for one iteration.
+- Only DECISIONS survive between versions.
   </script>
 
   <script type="text/plain" id="loopkit-agent-instructions">
@@ -44,13 +44,13 @@ LOOPKIT AGENT INSTRUCTIONS:
 <body>
   <main data-loop-id="basic.card" data-loop-kind="card" data-loop-title="Main card">
     <p data-loop-id="basic.kicker" data-loop-kind="kicker" data-loop-title="Kicker">LoopKit example</p>
-    <h1 data-loop-id="basic.title" data-loop-kind="heading" data-loop-title="Main title">Кликни элемент и оставь фидбэк</h1>
+    <h1 data-loop-id="basic.title" data-loop-kind="heading" data-loop-title="Main title">Click an element and leave feedback</h1>
     <p data-loop-id="basic.description" data-loop-kind="paragraph" data-loop-title="Description">
-      Нажми Mark up в панели LoopKit, выбери конкретный элемент и напиши комментарий. Потом нажми Copy bundle и вставь результат в любой AI-чат.
+      Press Mark up in the LoopKit panel, select a specific element, and write a comment. Then press Copy bundle and paste the result into any AI chat.
     </p>
     <div class="actions" data-loop-id="basic.actions" data-loop-kind="actions" data-loop-title="Action buttons">
-      <button class="demo" data-loop-id="basic.primary-action" data-loop-kind="button" data-loop-title="Primary action">Главное действие</button>
-      <button class="demo secondary" data-loop-id="basic.secondary-action" data-loop-kind="button" data-loop-title="Secondary action">Второе действие</button>
+      <button class="demo" data-loop-id="basic.primary-action" data-loop-kind="button" data-loop-title="Primary action">Primary action</button>
+      <button class="demo secondary" data-loop-id="basic.secondary-action" data-loop-kind="button" data-loop-title="Secondary action">Secondary action</button>
     </div>
   </main>
 

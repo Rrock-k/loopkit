@@ -1,26 +1,26 @@
 # LoopKit Protocol v0
 
-LoopKit Protocol описывает, как создавать HTML-артефакты, которые умеют собирать фидбэк прямо внутри интерфейса и передавать его AI для следующей итерации.
+The LoopKit Protocol defines how to create HTML artifacts that can collect feedback directly inside the interface and pass that feedback to AI for the next iteration.
 
-## 1. Главный цикл
+## 1. Core Loop
 
 ```text
 HTML v1
-→ пользователь оставляет фидбэк внутри HTML
-→ экспортирует feedback bundle
-→ AI делает HTML v2
-→ bundle v1 считается использованным
+-> user leaves feedback inside the HTML
+-> user exports a feedback bundle
+-> AI produces HTML v2
+-> bundle v1 is spent
 ```
 
-## 2. Артефакт
+## 2. Artifact
 
-Минимальный LoopKit-артефакт содержит:
+A minimal LoopKit artifact contains:
 
 - metadata;
 - `DECISIONS`;
-- `data-loop-id` на важных элементах;
-- подключённый `loopkit.js` или встроенный runtime;
-- возможность экспортировать feedback bundle.
+- `data-loop-id` anchors on important elements;
+- a linked `loopkit.js` runtime or an inline runtime;
+- a way to export a feedback bundle.
 
 ## 3. Metadata
 
@@ -29,61 +29,61 @@ HTML v1
 {
   "artifactId": "my-artifact",
   "artifactVersion": "v1",
-  "title": "My artifact"
+  "title": "My Artifact"
 }
 </script>
 ```
 
-Допускаются snake_case алиасы: `artifact_id`, `artifact_version`.
+Snake_case aliases are also supported: `artifact_id`, `artifact_version`.
 
 ## 4. DECISIONS
 
-`DECISIONS` — короткий список постоянных решений, которые переживают версии.
+`DECISIONS` is a short list of durable decisions that survive between versions.
 
 ```html
 <script type="text/plain" id="loopkit-decisions">
 DECISIONS:
-- Фидбэк одноразовый.
-- Не добавлять звук.
-- UI минималистичный.
+- Feedback is single-use.
+- Do not add sound.
+- Keep the UI minimal.
 </script>
 ```
 
-Это не changelog и не история комментариев.
+It is not a changelog and not a comment history.
 
 ## 5. Anchors
 
-Важные элементы получают смысловые якоря:
+Important elements get semantic anchors:
 
 ```html
 <section data-loop-id="hero" data-loop-kind="section" data-loop-title="Hero section"></section>
 <button data-loop-id="hero.cta" data-loop-kind="button" data-loop-title="Hero CTA"></button>
 ```
 
-`data-loop-id` должен быть уникальным внутри текущей версии артефакта.
+`data-loop-id` must be unique within the current artifact version.
 
-## 6. Runtime modes
+## 6. Runtime Modes
 
-- `Mark up` — выбрать элемент и оставить комментарий к нему;
-- `Comments` — оставить свободный pin-комментарий;
-- `Tweaks` — request-only: попросить агента добавить tweak-контролы в следующей версии;
-- `Copy bundle` — экспортировать feedback bundle.
+- `Mark up` selects an element and attaches a comment to it.
+- `Comments` leaves a free pin comment.
+- `Tweaks` is request-only: it asks the agent to add tweak controls in the next version.
+- `Copy bundle` exports the feedback bundle.
 
-В v0 `Tweaks` не обязан рендерить интерактивную панель. Панели твиков — будущий слой поверх этого протокола.
+In v0, `Tweaks` does not have to render an interactive control panel. Tweak panels are a future layer on top of this protocol.
 
-## 7. Keyboard behavior
+## 7. Keyboard Behavior
 
-Когда LoopKit просто висит сверху и ни один режим не активен, клавиши приложения должны работать как обычно.
+When LoopKit is only floating above the artifact and no mode is active, the artifact should receive keyboard input normally.
 
-Когда активен `Mark up`, `Comments`, `Tweaks`, открыт composer или drawer, LoopKit должен перехватывать клавиши, чтобы они не конфликтовали с артефактом.
+When `Mark up`, `Comments`, or `Tweaks` is active, or when the composer or drawer is open, LoopKit should intercept keyboard input so it does not conflict with the artifact.
 
-## 8. Feedback bundle
+## 8. Feedback Bundle
 
-Feedback bundle — переносимый пакет фидбэка для AI.
+A feedback bundle is a portable package of feedback for AI.
 
-Он валиден только для той версии, из которой был экспортирован.
+It is valid only for the artifact version that exported it.
 
-Минимальная форма item:
+Minimal item shape:
 
 ```json
 {
@@ -92,36 +92,36 @@ Feedback bundle — переносимый пакет фидбэка для AI.
     "id": "hero.cta",
     "title": "Hero CTA"
   },
-  "message": "Кнопка слишком незаметная"
+  "message": "The button is too quiet"
 }
 ```
 
-## 9. Single-use rule
+## 9. Single-Use Rule
 
-Фидбэк живёт одну итерацию.
+Feedback lives for one iteration.
 
-После выпуска новой версии старый bundle считается использованным и не переносится дальше.
+After a new version is released, the old bundle is considered spent and is not carried forward.
 
-Если проблема осталась, пользователь оставит новый фидбэк уже на новой версии.
+If the issue remains, the user should leave new feedback on the new version.
 
-## 10. Agent obligations
+## 10. Agent Obligations
 
-Агент обязан:
+The agent must:
 
-1. проверить версию bundle;
-2. прочитать `DECISIONS`;
-3. ответить на каждый feedback item;
-4. не решать конфликты молча;
-5. создать новую версию;
-6. не переносить старый bundle автоматически.
+1. verify the bundle version;
+2. read `DECISIONS`;
+3. respond to every feedback item;
+4. surface conflicts instead of resolving them silently;
+5. create a new version;
+6. avoid carrying old feedback forward automatically.
 
-## 11. Linked и standalone
+## 11. Linked and Standalone
 
-Это не два режима продукта, а два способа доставки одного runtime.
+These are not two product modes. They are two delivery formats for the same runtime.
 
 ```text
 Linked:     artifact.html + loopkit.js
-Standalone: artifact.standalone.html, где loopkit.js встроен inline
+Standalone: artifact.standalone.html with loopkit.js inlined
 ```
 
-Для разработки удобнее linked. Для передачи файла кому угодно удобнее standalone.
+Linked is better for development. Standalone is better when you need to send one file to anyone.

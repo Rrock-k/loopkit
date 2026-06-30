@@ -1,13 +1,13 @@
 # AGENTS.md
 
-Инструкция для AI-агентов, которые создают или улучшают LoopKit-артефакты.
+Instructions for AI agents that create or improve LoopKit artifacts.
 
-LoopKit — это не баг-трекер и не система вечной истории. Это portable feedback runtime: пользователь оставляет фидбэк внутри текущего HTML, экспортирует bundle, а агент делает следующую версию.
+LoopKit is not a bug tracker and not a permanent history system. It is a portable feedback runtime: the user leaves feedback inside the current HTML file, exports a bundle, and the agent creates the next version.
 
-## Когда создаёшь новый артефакт
+## When Creating a New Artifact
 
-1. Создай HTML, который можно открыть как обычную страницу.
-2. Добавь metadata:
+1. Create HTML that can open as a normal page.
+2. Add metadata:
 
 ```html
 <script type="application/loopkit+json" id="loopkit-meta">
@@ -19,49 +19,49 @@ LoopKit — это не баг-трекер и не система вечной 
 </script>
 ```
 
-3. Добавь `#loopkit-decisions` с короткими постоянными решениями.
-4. Желательно добавь `#loopkit-agent-instructions`, чтобы файл оставался понятным без GitHub-ссылки.
-5. Разметь важные элементы через `data-loop-id`, `data-loop-kind`, `data-loop-title`.
-6. Подключи runtime:
+3. Add `#loopkit-decisions` with short durable decisions.
+4. Prefer adding `#loopkit-agent-instructions` so the file remains understandable without a GitHub link.
+5. Mark important elements with `data-loop-id`, `data-loop-kind`, and `data-loop-title`.
+6. Load the runtime:
 
 ```html
 <script src="./loopkit.js"></script>
 ```
 
-7. Для standalone-версии можно встроить `loopkit.js` внутрь HTML build-скриптом.
-8. Не добавляй тяжёлые зависимости без явной причины.
+7. For a standalone version, inline `loopkit.js` into the HTML with the build script.
+8. Do not add heavy dependencies without a clear reason.
 
-## Когда делаешь следующую версию по feedback bundle
+## When Creating the Next Version from a Feedback Bundle
 
-1. Проверь, что bundle относится к текущей версии артефакта.
-2. Прочитай `DECISIONS` и не нарушай их молча.
-3. Обработай каждый feedback item.
-4. Если пункты противоречат друг другу — явно вынеси конфликт пользователю.
-5. Создай новую версию артефакта и увеличь `artifactVersion`.
-6. В ответе перечисли, что сделано по каждому item.
-7. Не переноси старый bundle автоматически: он одноразовый.
+1. Verify that the bundle belongs to the current artifact version.
+2. Read `DECISIONS` and do not violate them silently.
+3. Process every feedback item.
+4. If items conflict with each other, surface the conflict to the user.
+5. Create a new artifact version and increment `artifactVersion`.
+6. In the response, list what was done for each item.
+7. Do not carry the old bundle forward automatically. It is single-use.
 
-## Правило одноразового фидбэка
+## Single-Use Feedback Rule
 
-Feedback bundle живёт ровно одну итерацию.
+A feedback bundle lives for exactly one iteration.
 
 ```text
-HTML v1 + feedback bundle v1 → HTML v2
+HTML v1 + feedback bundle v1 -> HTML v2
 ```
 
-После выпуска новой версии старый bundle считается использованным. Если проблема осталась, пользователь оставит новый фидбэк уже на новой версии.
+After a new version is released, the old bundle is considered spent. If the issue remains, the user will leave new feedback on the new version.
 
-## Runtime scope v0
+## Runtime Scope v0
 
-- `Mark up` — привязанный к элементу комментарий.
-- `Comments` — свободный pin-комментарий.
-- `Tweaks` — request-only. Не генерируй сложную панель твиков без прямой просьбы пользователя.
-- `Copy bundle` — основной способ передачи фидбэка в другой чат/агент.
+- `Mark up` is an element-anchored comment.
+- `Comments` is a free pin comment.
+- `Tweaks` is request-only. Do not generate a complex tweak panel unless the user explicitly asks for one.
+- `Copy bundle` is the primary way to transfer feedback to another chat or agent.
 
-## Что нельзя делать
+## Do Not
 
-- Не игнорируй feedback items молча.
-- Не применяй bundle к другой версии HTML.
-- Не превращай LoopKit в Jira/Figma/Webflow.
-- Не добавляй Supabase/API как обязательную часть ядра.
-- Не нарушай `DECISIONS` без явного подтверждения пользователя.
+- Do not ignore feedback items silently.
+- Do not apply a bundle to a different HTML version.
+- Do not turn LoopKit into Jira, Figma, or Webflow.
+- Do not make Supabase or any API a required part of the core.
+- Do not violate `DECISIONS` without explicit user confirmation.
